@@ -16,6 +16,7 @@ public class EDIMetadata {
     private EDIID receiver = new EDIID();
     private EDIID groupSender = new EDIID();
     private EDIID groupReceiver = new EDIID();
+    private String function;
     private String type;
     private String icn;
     private boolean typed;
@@ -25,6 +26,7 @@ public class EDIMetadata {
         receiver = new EDIID();
         groupSender = new EDIID();
         groupReceiver = new EDIID();
+        function = null;
         type = null;
         icn = null;
         typed = false;
@@ -47,6 +49,7 @@ public class EDIMetadata {
         receiver.id(group(m, "receiver"));
         groupSender.id(group(m, "groupSender"));
         groupReceiver.id(group(m, "groupReceiver"));
+        function = group(m, "function");
         type = group(m, "type");
         icn = group(m, "icn");
     }
@@ -80,6 +83,7 @@ public class EDIMetadata {
                     .qualifier(getElement(edisegment, 6));
             icn = getElement(edisegment, 12);
         } else if (edisegment.getName().equals("GS")) { // functional group header
+            function = getElement(edisegment, 0);
             groupSender.id(getElement(edisegment, 1));
             groupReceiver.id(getElement(edisegment, 2));
         } else if (edisegment.getName().equals("ST")) { // transaction set header
@@ -95,8 +99,9 @@ public class EDIMetadata {
             receiver.fromEdifact(edisegment, 2);
             icn = getSubelementOrNot(edisegment, 4);
         } else if (edisegment.getName().equals("UNG")) { // functional group header
-            groupSender.fromEdifact(edisegment, 5);
-            groupReceiver.fromEdifact(edisegment, 6);
+            function = getSubelementOrNot(edisegment, 0);
+            groupSender.fromEdifact(edisegment, 1);
+            groupReceiver.fromEdifact(edisegment, 2);
         } else if (edisegment.getName().equals("UNH")) { // message header
             type = getSubelementOrNot(edisegment, 1);
             typed = true;
@@ -150,6 +155,9 @@ public class EDIMetadata {
     public EDIID groupReceiver() {
         return groupReceiver;
     }
+    public String function() {
+        return function;
+    }
     public String type() {
         return type;
     }
@@ -173,6 +181,7 @@ public class EDIMetadata {
                 && matches(receiver(), route.receiver(), route.receiverQualifier())
                 && matches(groupSender(), route.groupSender(), route.groupSenderQualifier())
                 && matches(groupReceiver(), route.groupReceiver(), route.groupReceiverQualifier())
+                && matches(function(), route.function())
                 && matches(type(), route.type());
     }
 
@@ -181,6 +190,7 @@ public class EDIMetadata {
                 && receiver.isEmpty()
                 && groupSender.isEmpty()
                 && groupReceiver.isEmpty()
+                && Strings.isNullOrEmpty(function)
                 && Strings.isNullOrEmpty(type);
     }
 
@@ -198,6 +208,9 @@ public class EDIMetadata {
         }
         if (!groupReceiver.isEmpty()) {
             sb.append("groupReceiver=").append(groupReceiver.toString()).append(' ');
+        }
+        if (!Strings.isNullOrEmpty(function)) {
+            sb.append("function=").append(function).append(' ');
         }
         if (!Strings.isNullOrEmpty(type)) {
             sb.append("type=").append(type).append(' ');

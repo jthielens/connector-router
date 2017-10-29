@@ -11,6 +11,7 @@ public class Route {
     private String receiverQualifier;
     private String groupSenderQualifier;
     private String groupReceiverQualifier;
+    private String function;
     private String type;
     private String destination;
 
@@ -25,6 +26,7 @@ public class Route {
         this.receiverQualifier = null;
         this.groupSenderQualifier = null;
         this.groupReceiverQualifier = null;
+        this.function = null;
         this.type = null;
         this.destination = null;
     }
@@ -97,6 +99,13 @@ public class Route {
     }
     public Route groupReceiverQualifier(String groupReceiverQualifier) {
         this.groupReceiverQualifier = groupReceiverQualifier;
+        return this;
+    }
+    public String function() {
+        return function;
+    }
+    public Route function(String function) {
+        this.function = function;
         return this;
     }
     public String type() {

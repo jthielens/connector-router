@@ -35,6 +35,7 @@ public class MacroEngine {
         receiverQualifier(null, (metadata) -> metadata.receiver().qualifier()),
         groupSenderQualifier(null, (metadata) -> metadata.groupSender().qualifier()),
         groupReceiverQualifier(null, (metadata) -> metadata.groupReceiver().qualifier()),
+        function(null, EDIMetadata::function),
         type(null, EDIMetadata::type),
         icn(null, EDIMetadata::icn);
 

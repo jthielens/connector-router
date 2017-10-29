@@ -20,6 +20,7 @@ public class TestMacroEngine {
         when(mock.receiver()).thenReturn(new EDIID("RR","TO"));
         when(mock.groupSender()).thenReturn(new EDIID("FG","GFROM"));
         when(mock.groupReceiver()).thenReturn(new EDIID("RG","GTO"));
+        when(mock.function()).thenReturn("FUNCTION");
         when(mock.type()).thenReturn("MOCK");
         when(mock.icn()).thenReturn("123456");
         when(mock.isEmpty()).thenReturn(false);
@@ -45,19 +46,21 @@ public class TestMacroEngine {
         assertEquals("RR", engine.expand("${receiverQualifier}"));
         assertEquals("FG", engine.expand("${groupSenderQualifier}"));
         assertEquals("RG", engine.expand("${groupReceiverQualifier}"));
+        assertEquals("FUNCTION", engine.expand("${function}"));
         assertEquals("MOCK", engine.expand("${type}"));
         assertEquals("123456", engine.expand("${icn}"));
     }
 
     @Test
     public void testCapture() {
-        Pattern p = Pattern.compile("(?<sender>\\S+)\\s+(?<receiver>\\S+)\\s+(?<type>\\S+)\\s+(?<icn>\\S+)");
-        Matcher m = p.matcher("FROM TO 214 123456");
+        Pattern p = Pattern.compile("(?<sender>\\S+)\\s+(?<receiver>\\S+)\\s+(?<function>\\S+)\\s+(?<type>\\S+)\\s+(?<icn>\\S+)");
+        Matcher m = p.matcher("FROM TO GG 214 123456");
         m.matches();
         EDIMetadata metadata = new EDIMetadata(m);
         MacroEngine engine = new MacroEngine(metadata, "filename.ext");
         assertEquals("FROM", engine.expand("${sender}"));
         assertEquals("TO", engine.expand("${receiver}"));
+        assertEquals("GG", engine.expand("${function}"));
         assertEquals("214", engine.expand("${type}"));
         assertEquals("123456", engine.expand("${icn}"));
     }

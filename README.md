@@ -154,6 +154,7 @@ Expression                | Description
 `receiver`                | the receiver metadata
 `groupSender`             | the functional group sender metadata
 `groupReceiver`           | the functional group receiver metadata
+`function`                | the functional group identification
 `type`                    | the transaction type
 `icn`                     | the interchange control number
 `date('format')`          | the current date/time formatted with ['format'](http://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html)
@@ -171,12 +172,13 @@ Token                    | X12   | EDIFACT | TRADACOMS | non-EDI
 -------------------------|-------|---------|-----------|--------
 `sender`                 | ISA06 | UNB02:1 | STX02:1   | `(?<sender>...)`
 `receiver`               | ISA08 | UNB03:1 | STX03:1   | `(?<receiver>...)`
-`groupSender`            | GS02  | UNG06:1 |           | `(?<groupSender>...)`
-`groupReceiver`          | GS03  | UNG07:1 |           | `(?<groupReceiver>...)`
+`groupSender`            | GS02  | UNG02:1 |           | `(?<groupSender>...)`
+`groupReceiver`          | GS03  | UNG03:1 |           | `(?<groupReceiver>...)`
 `senderQualifier`        | ISA05 | UNB02:2 |           |
 `receiverQualifier`      | ISA07 | UNB03:2 |           |
-`groupSenderQualifier`   |       | UNG06:2 |           |
-`groupReceiverQualifier` |       | UNG07:2 |           |
+`groupSenderQualifier`   |       | UNG02:2 |           |
+`groupReceiverQualifier` |       | UNG03:2 |           |
+`function`               | GS01  | UNG01   |           | `(?<function>...)`
 `type`                   | ST01  | UNH09:1 | MHD02     | `(?<type>...)`
 `icn`                    | ISA13 | UNB05:1 | STX05:1   | `(?<icn>...)`
 
