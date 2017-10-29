@@ -79,6 +79,11 @@ public class RoutingTableProperty {
         .build();
 
     @Property
+    final public IConnectorProperty<String> function = new PropertyBuilder<>("Function", "")
+        .setDescription("Regular expression to match the functional group identifier")
+        .build();
+
+    @Property
     final public IConnectorProperty<String> type = new PropertyBuilder<>("Type", "")
         .setDescription("Regular expression to match the transaction type")
         .build();

@@ -63,8 +63,8 @@ while the `Destination` is an expression template used to calculate the
 destination location.  In general, if a column is left blank in a routing
 table entry, then it always matches the associated criterion.
 
-Enabled | Filename | Content | Sender | Receiver | Group Sender | Group Receiver | Type | Destination
---------|----------|---------|--------|----------|--------------|----------------|------|------------
+Enabled | Filename | Content | Sender | Receiver | Group Sender | Group Receiver | Function | Type | Destination
+--------|----------|---------|--------|----------|--------------|----------------|----------|------|------------
 &nbsp;  | 
 
 The routing process proceeds in stages:
