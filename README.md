@@ -107,7 +107,7 @@ concatenated in a single file.
 When the router discovers an EDI file, it automatically separataes the
 interchanges, and routes each as if it were a separate file.  Each
 interchange is matched against the routing rules independently.  It
-is possible for some interchangs to route successfully while others
+is possible for some interchanges to route successfully while others
 fail to match any routing rules.  In this case, the overall transfer
 will fail even if some interchanges were routed successully.
 
@@ -117,7 +117,88 @@ For non-EDI files for which a preview is matched against a filter pattern,
 the filter pattern may include capture groups that describe metadata values
 to extract from the content.
 
-The following metadata tokens are supported.
+Named capture groups are expressed in a pattern as `(?<token>pattern)`
+where `token` is one of the supported token names from the list below
+and `pattern` is a regular expression matching the content to be
+extracted.  For example, if a route is matching an XML document
+that may contain embedded elements `<sender>some value</sender>`
+or `<receiver>some value</receiver>`, the following expression will
+match and extract the `some value` portions, irrespective of the
+order in which the `<sender>` and `<receiver>` elements appear in the
+document:
+
+```
+(?:.*?(?:<sender>(?<sender>[^<]*)</sender>|<receiver>(?<receiver>[^<]*)</receiver>))*.*
+```
+
+The anatomy of this regular expression comprises:
+
+* an outer framework of `(?:.*?thing)*.*` (keep in mind that `(?:pattern)` is
+  a non-capturing grouping expression) which means a sequence of interesting
+  `thing`s, separated by padding text `.*?`, followed by arbitrary padding text
+  `.*`.
+* a definition of `thing` as a choice between alternatives `(?:a|b)` (this
+  could be extended to `(?:a|b|c|...)` as needed).
+* each alternative is an XML fragment `<tag>value</tag>`.
+* each `value` is captured as a token `(?<token>...)` and contains arbitrary
+  text up to the closing tag `[^<]*`.
+
+The following metadata tokens are supported (the tokens are case sensitive):
+
+Expression                | Description
+--------------------------|------------
+`file`                    | the source filename
+`base`                    | the base portion of the filename (.extension removed)
+`ext`                     | the filename extension (including the . prefix)
+`sender`                  | the sender metadata
+`receiver`                | the receiver metadata
+`groupSender`             | the functional group sender metadata
+`groupReceiver`           | the functional group receiver metadata
+`type`                    | the transaction type
+`icn`                     | the interchange control number
+`date('format')`          | the current date/time formatted with ['format'](http://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html)
 
 ## Destination Expressions ##
+
+The route destination is a string that may include embedded expressions
+of the form `${expression}`.  Any arbitrary JavaScript expression is
+supported as an `expression`, but typically simple variable references
+to metadata pre-loaded into the JavaScript engine's environment suffice.
+
+The following primitives are supported:
+
+Token                    | X12   | EDIFACT | TRADACOMS | non-EDI
+-------------------------|-------|---------|-----------|--------
+`sender`                 | ISA06 | UNB02:1 | STX02:1   | `(?<sender>...)`
+`receiver`               | ISA08 | UNB03:1 | STX03:1   | `(?<receiver>...)`
+`groupSender`            | GS02  | UNG06:1 |           | `(?<groupSender>...)`
+`groupReceiver`          | GS03  | UNG07:1 |           | `(?<groupReceiver>...)`
+`senderQualifier`        | ISA05 | UNB02:2 |           |
+`receiverQualifier`      | ISA07 | UNB03:2 |           |
+`groupSenderQualifier`   |       | UNG06:2 |           |
+`groupReceiverQualifier` |       | UNG07:2 |           |
+`type`                   | ST01  | UNH09:1 | MHD02     | `(?<type>...)`
+`icn`                    | ISA13 | UNB05:1 | STX05:1   | `(?<icn>...)`
+
+For example, the destination:
+
+```
+/path/${file}.${icn}${ext}
+```
+
+will expand the three embedded metadata variable references for form
+the destination filename.  This could also be expressed using JavaScript
+as:
+
+```
+/path/${file+'.'+icn+ext}
+```
+
+Note that URI destinations are supported, so a destination of the form:
+
+```
+scheme:connection/path
+```
+
+can be used to route a file through a URI.
 
