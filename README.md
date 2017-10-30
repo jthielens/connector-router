@@ -112,6 +112,24 @@ is possible for some interchanges to route successfully while others
 fail to match any routing rules.  In this case, the overall transfer
 will fail even if some interchanges were routed successully.
 
+### Non-EDI Preview Size ###
+
+Metadata extraction for non-EDI files requires that first a preview of
+the file content is read from the source file for matching against the
+`Content` pattern.  The `Preview Size` is configured as a property of
+the Router Connector, and defaults to `8k`.  You may enter values for
+the `Preview Size` using _human readable_ suffixes for convenience.  In
+the table below, _nnn_ represents an arbitrary integer value.
+
+Preview Size      | Result
+------------------|-------
+_nnn_             | up to _nnn_ bytes are loaded for preview
+_nnn_k or _nnn_kb | _nnn_ [kibibytes](https://en.wikipedia.org/wiki/Kibibyte) (&times; 1024) bytes are loaded
+_nnn_m or _nnn_mb | _nnn_ [mebibytes](https://en.wikipedia.org/wiki/Mebibyte) (&times; 1024&sup2;) bytes are loaded
+
+The preview buffer is held entirely in memory, so be mindful of practical
+resource limits when configuring the preview size.
+
 ## Metadata Extraction ##
 
 For non-EDI files for which a preview is matched against a filter pattern,
