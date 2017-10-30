@@ -1,5 +1,7 @@
 package com.cleo.labs.connector.router;
 
+import com.google.common.base.Strings;
+
 public class Route {
     private String filename;
     private String content;
@@ -121,5 +123,53 @@ public class Route {
     public Route destination(String destination) {
         this.destination = destination;
         return this;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        if (!Strings.isNullOrEmpty(filename)) {
+            sb.append("filename=").append(filename.toString()).append(' ');
+        }
+        if (!Strings.isNullOrEmpty(content)) {
+            sb.append("content=").append(content.toString()).append(' ');
+        }
+        if (!Strings.isNullOrEmpty(sender)) {
+            sb.append("sender=").append(sender.toString()).append(' ');
+        }
+        if (!Strings.isNullOrEmpty(receiver)) {
+            sb.append("receiver=").append(receiver.toString()).append(' ');
+        }
+        if (!Strings.isNullOrEmpty(groupSender)) {
+            sb.append("groupSender=").append(groupSender.toString()).append(' ');
+        }
+        if (!Strings.isNullOrEmpty(groupReceiver)) {
+            sb.append("groupReceiver=").append(groupReceiver.toString()).append(' ');
+        }
+        if (!Strings.isNullOrEmpty(senderQualifier)) {
+            sb.append("senderQualifier=").append(senderQualifier.toString()).append(' ');
+        }
+        if (!Strings.isNullOrEmpty(receiverQualifier)) {
+            sb.append("receiverQualifier=").append(receiverQualifier.toString()).append(' ');
+        }
+        if (!Strings.isNullOrEmpty(groupSenderQualifier)) {
+            sb.append("groupSenderQualifier=").append(groupSenderQualifier.toString()).append(' ');
+        }
+        if (!Strings.isNullOrEmpty(groupReceiverQualifier)) {
+            sb.append("groupReceiverQualifier=").append(groupReceiverQualifier.toString()).append(' ');
+        }
+        if (!Strings.isNullOrEmpty(function)) {
+            sb.append("function=").append(function).append(' ');
+        }
+        if (!Strings.isNullOrEmpty(type)) {
+            sb.append("type=").append(type).append(' ');
+        }
+        if (!Strings.isNullOrEmpty(destination)) {
+            sb.append("destination=").append(destination).append(' ');
+        }
+        if (sb.length()>0) {
+            sb.setLength(sb.length()-1);
+        }
+        return sb.toString();
     }
 }
