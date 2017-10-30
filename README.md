@@ -96,7 +96,11 @@ The routing process proceeds in stages:
    can be simple metadata tokens or arbitrary JavaScript expressions
    &mdash; see [Destination Expressions](#destination-expressions) below).
 7. The file contents are copied to the destination(s).
-8. If a file matches no routes, the transfer ends in error.
+8. If a file matches no routes, but an error destionation is configured,
+   the file is copied to the error destination.  Note that metadata
+   tokens can be expanded in the error destination string.
+9. If a file matches no routes and no error destionation is configured,
+   the transfer ends in error.
 
 ### EDI Splitting ###
 

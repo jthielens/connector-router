@@ -4,10 +4,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.bouncycastle.util.Arrays;
 
 import com.google.common.io.ByteStreams;
 
@@ -32,7 +31,7 @@ public class PreviewInputStream extends RoutableInputStreams.RoutableInputStream
     }
 
     public EDIMetadata metadata() {
-        return metadata();
+        return metadata;
     }
 
     public boolean matches(Route route) {

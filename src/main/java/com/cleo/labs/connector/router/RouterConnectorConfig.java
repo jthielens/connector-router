@@ -17,6 +17,10 @@ public class RouterConnectorConfig {
         return parseLength(schema.previewSize.getValue(client));
     }
 
+    public String getErrorDestination() throws ConnectorPropertyException {
+        return schema.errorDestination.getValue(client);
+    }
+
     public Route[] getRoutes() throws ConnectorPropertyException {
         String value = schema.routingTable.getValue(client);
         return RoutingTableProperty.toRoutes(value);

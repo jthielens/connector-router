@@ -50,13 +50,13 @@ public class RouterConnectorClient extends ConnectorClient {
                 .toArray(Route[]::new);
 
         boolean nomatch = false; // this will be set true if any stream is not routable
-        MacroEngine engine = new MacroEngine();
+        MacroEngine engine = new MacroEngine().filename(source.getPath());
 
         for (RoutableInputStream is : new RoutableInputStreams(source.getStream(), config.getPreviewSize())) {
+            engine.metadata(is.metadata());
             List<String> destinations = new ArrayList<>();
             for (Route route : routes) {
                 if (is.matches(route)) {
-                    engine.filename(source.getPath()).metadata(is.metadata());
                     String output = engine.expand(route.destination());
                     destinations.add(output);
                 }
@@ -73,6 +73,18 @@ public class RouterConnectorClient extends ConnectorClient {
                     .filter(Objects::nonNull)
                     .toArray(OutputStream[]::new);
             // TODO: unique
+            if (outputs.length == 0)  {
+                String errorDestination = config.getErrorDestination();
+                if (!Strings.isNullOrEmpty(errorDestination)) {
+                    try {
+                        outputs = new OutputStream[] {
+                                new LexFileOutputStream(new LexFile(engine.expand(errorDestination)))
+                        };
+                    } catch (Exception e) {
+                        // well, we tried
+                    }
+                }
+            }
             if (outputs.length == 0) {
                 nomatch = true;
                 ByteStreams.copy(is, ByteStreams.nullOutputStream());

@@ -33,6 +33,12 @@ public class RouterConnectorSchema extends ConnectorConfig {
             .build();
 
     @Property
+    final IConnectorProperty<String> errorDestination = new PropertyBuilder<>("ErrorDestination", "")
+            .setDescription("An optional destination expression for files that do not match any routing rules.")
+            .setRequired(false)
+            .build();
+
+    @Property
     final IConnectorProperty<Boolean> enableDebug = CommonProperties.of(CommonProperty.EnableDebug);
 
     @Info
