@@ -157,7 +157,6 @@ Expression                | Description
 `function`                | the functional group identification
 `type`                    | the transaction type
 `icn`                     | the interchange control number
-`date('format')`          | the current date/time formatted with ['format'](http://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html)
 
 ## Destination Expressions ##
 
@@ -182,19 +181,36 @@ Token                    | X12   | EDIFACT | TRADACOMS | non-EDI
 `type`                   | ST01  | UNH09:1 | MHD02     | `(?<type>...)`
 `icn`                    | ISA13 | UNB05:1 | STX05:1   | `(?<icn>...)`
 
+The following file-level primitives are also supported, but do not depend
+on metadata extraction or EDI parsing:
+
+Token               | Description
+--------------------|------------
+`file`              | the source filename
+`base`              | the base portion of the filename (.extension removed)
+`ext`               | the filename extension (including the . prefix)
+`date('format')`    | the current date/time formatted with ['format'](http://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html)
+
 For example, the destination:
 
 ```
 /path/${file}.${icn}${ext}
 ```
 
-will expand the three embedded metadata variable references for form
-the destination filename.  This could also be expressed using JavaScript
-as:
+will expand the three embedded metadata variable references from
+the destination filename and file content parsing.
+This could also be expressed using JavaScript as:
 
 ```
 /path/${file+'.'+icn+ext}
 ```
+
+As a performance optimization, any JavaScript expression of the form
+`${token}` for one of the tokens above is expanded without invoking
+the JavaScript engine.  Also, the primitives `${date('string')}` or
+`${date("string")}` are similarly expanded without invoking JavaScript.
+This means that although the two examples above produce the same
+result, the first one executes much more quickly.
 
 Note that URI destinations are supported, so a destination of the form:
 

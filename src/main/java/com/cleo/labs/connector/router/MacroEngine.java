@@ -65,8 +65,12 @@ public class MacroEngine {
         }
     }
 
-    public MacroEngine(EDIMetadata metadata, String filename) {
+    public MacroEngine() {
         now = new Date();
+    }
+
+    public MacroEngine(EDIMetadata metadata, String filename) {
+        this();
         metadata(metadata);
         filename(filename);
     }
@@ -76,17 +80,17 @@ public class MacroEngine {
         if (engine != null) {
             Stream.of(Token.values())
                     .filter((t) -> t.filenameFunction != null)
-                    .forEach((t) -> engine.put(t.name(), t.filenameFunction.apply(filename)));
+                    .forEach((t) -> engine.put(t.name(), filename==null ? "" : t.filenameFunction.apply(filename)));
         }
         return this;
     }
 
     public MacroEngine metadata(EDIMetadata metadata) {
         this.metadata = metadata;
-        if (engine != null) {
+        if (engine != null && metadata != null) {
             Stream.of(Token.values())
                     .filter((t) -> t.metadataFunction != null)
-                    .forEach((t) -> engine.put(t.name(), t.metadataFunction.apply(metadata)));
+                    .forEach((t) -> engine.put(t.name(), metadata==null ? "" : t.metadataFunction.apply(metadata)));
         }
         return this;
     }
@@ -115,9 +119,9 @@ public class MacroEngine {
             try {
                 Token token = Token.valueOf(name);
                 if (token.filenameFunction != null) {
-                    return Strings.nullToEmpty(token.filenameFunction.apply(filename));
+                    return filename == null ? "" : Strings.nullToEmpty(token.filenameFunction.apply(filename));
                 } else if (token.metadataFunction != null) {
-                    return Strings.nullToEmpty(token.metadataFunction.apply(metadata));
+                    return metadata == null ? "" : Strings.nullToEmpty(token.metadataFunction.apply(metadata));
                 }
             } catch (IllegalArgumentException e) {
                 // fall through

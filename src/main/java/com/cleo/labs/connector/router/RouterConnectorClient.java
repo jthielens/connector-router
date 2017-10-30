@@ -50,12 +50,13 @@ public class RouterConnectorClient extends ConnectorClient {
                 .toArray(Route[]::new);
 
         boolean nomatch = false; // this will be set true if any stream is not routable
+        MacroEngine engine = new MacroEngine();
 
         for (RoutableInputStream is : new RoutableInputStreams(source.getStream(), config.getPreviewSize())) {
             List<String> destinations = new ArrayList<>();
             for (Route route : routes) {
                 if (is.matches(route)) {
-                    MacroEngine engine = new MacroEngine(is.metadata(), source.getPath());
+                    engine.filename(source.getPath()).metadata(is.metadata());
                     String output = engine.expand(route.destination());
                     destinations.add(output);
                 }

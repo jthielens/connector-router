@@ -52,6 +52,42 @@ public class TestMacroEngine {
     }
 
     @Test
+    public void testNullMetadata() {
+        MacroEngine engine = new MacroEngine();
+        assertEquals("", engine.expand("${sender}"));
+        assertEquals("", engine.expand("${receiver}"));
+        assertEquals("", engine.expand("${groupSender}"));
+        assertEquals("", engine.expand("${groupReceiver}"));
+        assertEquals("", engine.expand("${senderQualifier}"));
+        assertEquals("", engine.expand("${receiverQualifier}"));
+        assertEquals("", engine.expand("${groupSenderQualifier}"));
+        assertEquals("", engine.expand("${groupReceiverQualifier}"));
+        assertEquals("", engine.expand("${function}"));
+        assertEquals("", engine.expand("${type}"));
+        assertEquals("", engine.expand("${icn}"));
+    }
+
+    @Test
+    public void testNullMetadataOverwrite() {
+        MacroEngine engine = new MacroEngine(metadata(), "filename.ext");
+        engine.filename(null).metadata(null);
+        assertEquals("", engine.expand("${file}"));
+        assertEquals("", engine.expand("${base}"));
+        assertEquals("", engine.expand("${ext}"));
+        assertEquals("", engine.expand("${sender}"));
+        assertEquals("", engine.expand("${receiver}"));
+        assertEquals("", engine.expand("${groupSender}"));
+        assertEquals("", engine.expand("${groupReceiver}"));
+        assertEquals("", engine.expand("${senderQualifier}"));
+        assertEquals("", engine.expand("${receiverQualifier}"));
+        assertEquals("", engine.expand("${groupSenderQualifier}"));
+        assertEquals("", engine.expand("${groupReceiverQualifier}"));
+        assertEquals("", engine.expand("${function}"));
+        assertEquals("", engine.expand("${type}"));
+        assertEquals("", engine.expand("${icn}"));
+    }
+
+    @Test
     public void testCapture() {
         Pattern p = Pattern.compile("(?<sender>\\S+)\\s+(?<receiver>\\S+)\\s+(?<function>\\S+)\\s+(?<type>\\S+)\\s+(?<icn>\\S+)");
         Matcher m = p.matcher("FROM TO GG 214 123456");
