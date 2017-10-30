@@ -21,7 +21,7 @@ public class EDIMetadata {
     private String icn;
     private boolean typed;
 
-    public void resset() {
+    public void reset() {
         sender = new EDIID();
         receiver = new EDIID();
         groupSender = new EDIID();
@@ -34,7 +34,7 @@ public class EDIMetadata {
 
     public EDIMetadata(EDI edi) throws IOException {
         this.edi = edi;
-        resset();
+        reset();
     }
 
     private static String group(Matcher m, String name) {
