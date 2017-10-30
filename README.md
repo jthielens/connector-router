@@ -86,7 +86,7 @@ The routing process proceeds in stages:
    pattern is empty or does not match the preview are eliminated from further
    consideration.  Matching rules are then inspected for named
    capture groups, which then populate a metadata object for the file
-   (see Metadata Extraction below).
+   (see [Metadata Extraction](#metadata-extraction) below).
 5. The extracted metadata is now matched against the corresponding
    patterns in the remaining rules.  Rules all of whose metadata
    patterns match the file are considered activated.
@@ -94,7 +94,7 @@ The routing process proceeds in stages:
    to calculate the destination filename.  Expressions of the form
    `${expression}` are replaced with the appropriate values (which
    can be simple metadata tokens or arbitrary JavaScript expressions
-   &mdash; see Destination Expressions below).
+   &mdash; see [Destination Expressions](#destination-expressions) below).
 7. The file contents are copied to the destination(s).
 8. If a file matches no routes, the transfer ends in error.
 
