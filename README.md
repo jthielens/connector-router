@@ -124,8 +124,8 @@ the table below, _nnn_ represents an arbitrary integer value.
 Preview Size      | Result
 ------------------|-------
 _nnn_             | up to _nnn_ bytes are loaded for preview
-_nnn_k or _nnn_kb | _nnn_ [kibibytes](https://en.wikipedia.org/wiki/Kibibyte) (&times; 1024) bytes are loaded
-_nnn_m or _nnn_mb | _nnn_ [mebibytes](https://en.wikipedia.org/wiki/Mebibyte) (&times; 1024&sup2;) bytes are loaded
+<em>nnn</em>k or <em>nnn</em>kb | _nnn_ [kibibytes](https://en.wikipedia.org/wiki/Kibibyte) (&times; 1024) bytes are loaded
+<em>nnn</em>m or <em>nnn</em>mb | _nnn_ [mebibytes](https://en.wikipedia.org/wiki/Mebibyte) (&times; 1024&sup2;) bytes are loaded
 
 The preview buffer is held entirely in memory, so be mindful of practical
 resource limits when configuring the preview size.
