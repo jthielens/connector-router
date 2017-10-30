@@ -36,7 +36,7 @@ public class PreviewInputStream extends RoutableInputStreams.RoutableInputStream
 
     public boolean matches(Route route) {
         if (route.content() != null) {
-            Pattern p = Pattern.compile(route.content());
+            Pattern p = Pattern.compile(route.content(), Pattern.DOTALL);
             Matcher m = p.matcher(new String(buf));
             if (m.matches()) {
                 metadata = new EDIMetadata(m);

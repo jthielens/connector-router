@@ -53,10 +53,12 @@ public class RouterConnectorClient extends ConnectorClient {
         MacroEngine engine = new MacroEngine().filename(source.getPath());
 
         for (RoutableInputStream is : new RoutableInputStreams(source.getStream(), config.getPreviewSize())) {
-            engine.metadata(is.metadata());
             List<String> destinations = new ArrayList<>();
             for (Route route : routes) {
+                logger.debug(String.format("matching %s for route %s", source.getPath(), route.toString()));
                 if (is.matches(route)) {
+                    engine.metadata(is.metadata());
+                    logger.debug(String.format("matched metadata: %s", is.metadata().toString()));
                     String output = engine.expand(route.destination());
                     destinations.add(output);
                 }

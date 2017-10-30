@@ -147,9 +147,9 @@ public class TestRouter {
     }
     @Test
     public final void testPreviewMatch() throws IOException {
-        String s = "header is a=EPP b=XYZ c=123 with lots of other stuff";
+        String s = "header is\na=EPP b=XYZ\nc=123 with lots\nof other stuff";
         InputStream bis = new ByteArrayInputStream(s.getBytes());
-        Route r = new Route().content(".*(?<=a=)(?<sender>\\S*).*(?<=b=)(?<receiver>\\S*).*(?<=c=)(?<type>\\S*).*")
+        Route r = new Route().content(".*?(?<=a=)(?<sender>\\S*).*(?<=b=)(?<receiver>\\S*).*(?<=c=)(?<type>\\S*).*")
                 .sender("EPP").receiver("XYZ").type("123");
         Route no = new Route().content(".*(?<=a=)(?<sender>\\S*).*(?<=b=)(?<receiver>\\S*).*(?<=c=)(?<type>\\S*).*")
                 .sender("ExP").receiver("xyZ").type("23");
