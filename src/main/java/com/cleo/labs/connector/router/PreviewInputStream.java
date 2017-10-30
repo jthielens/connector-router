@@ -46,7 +46,7 @@ public class PreviewInputStream extends RoutableInputStreams.RoutableInputStream
                 return false;
             }
         } else {
-            return true;
+            return false;
         }
     }
 }

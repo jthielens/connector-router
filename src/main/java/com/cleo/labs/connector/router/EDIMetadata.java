@@ -177,7 +177,8 @@ public class EDIMetadata {
                 && (Strings.isNullOrEmpty(qualifierMatch) || Strings.nullToEmpty(id.qualifier()).matches(qualifierMatch));
     }
     public boolean matches(Route route) {
-        return matches(sender(), route.sender(), route.senderQualifier())
+        return Strings.isNullOrEmpty(route.content())
+                && matches(sender(), route.sender(), route.senderQualifier())
                 && matches(receiver(), route.receiver(), route.receiverQualifier())
                 && matches(groupSender(), route.groupSender(), route.groupSenderQualifier())
                 && matches(groupReceiver(), route.groupReceiver(), route.groupReceiverQualifier())

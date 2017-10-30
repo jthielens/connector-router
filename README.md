@@ -77,12 +77,13 @@ The routing process proceeds in stages:
 3. Based on the classification of the file, metadata is extracted for
    further routing.  If the file is EDI, the standard envelope headers
    are parsed and the Sender, Receiver, Group Sender, Group Receiver,
-   and transaction Type are extracted.  The qalifiers for the sender
+   Function, and transaction Type are extracted.  The qualifiers for the sender
    and receiver IDs are also extracted, although they are not used for
-   routing.
+   routing.  Rules with a `Content` pattern are eliminated from
+   further consideration for EDI files.
 4. For non-EDI files, a preview buffer is loaded from the file and
    is matched against the `Content` pattern.  Rules whose `Content`
-   pattern does not match the preview are eliminated from further
+   pattern is empty or does not match the preview are eliminated from further
    consideration.  Matching rules are then inspected for named
    capture groups, which then populate a metadata object for the file
    (see Metadata Extraction below).
