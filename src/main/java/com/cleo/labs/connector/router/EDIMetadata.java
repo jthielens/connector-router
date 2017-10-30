@@ -314,7 +314,7 @@ public class EDIMetadata {
      * @return {@code true} if all metadata values match
      */
     public boolean matches(Route route) {
-        return Strings.isNullOrEmpty(route.content())
+        return ((edi!=null) == Strings.isNullOrEmpty(route.content()))  // edi MUST NOT have content, non-edi MUST have content
                 && sender().matches(route.senderQualifier(), route.sender())
                 && receiver().matches(route.receiverQualifier(), route.receiver())
                 && groupSender().matches(route.groupSenderQualifier(), route.groupSender())

@@ -145,6 +145,7 @@ public class TestRouter {
         }
         assertEquals(1, count);
     }
+    @Test
     public final void testPreviewMatch() throws IOException {
         String s = "header is a=EPP b=XYZ c=123 with lots of other stuff";
         InputStream bis = new ByteArrayInputStream(s.getBytes());
@@ -164,10 +165,10 @@ public class TestRouter {
                 fail("not a preview input stream");
             }
             assertEquals(s, ris);
-            assertEquals("EPP", is.metadata().sender());
-            assertEquals("XYZ", is.metadata().receiver());
-            assertEquals("123", is.metadata().type());
             assertTrue(is.matches(r));
+            assertEquals("EPP", is.metadata().sender().id());
+            assertEquals("XYZ", is.metadata().receiver().id());
+            assertEquals("123", is.metadata().type());
             assertFalse(is.matches(no));
             count++;
             is.close();
