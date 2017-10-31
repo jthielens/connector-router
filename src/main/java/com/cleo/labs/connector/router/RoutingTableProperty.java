@@ -11,17 +11,19 @@ import com.google.gson.Gson;
 /**
  * Routing table extended property - @Array of subproperties (identified by @Property)
  * 
- * Each route contains:
- * <ul><li>filename - a {@link java.util.regex.Pattern}.  If non-empty, this
- *           route will be activated only when the pattern matches.</li>
- *     <li>content - a {@link java.util.regex.Pattern}.  If non-empty, the file
- *           content will be read and compared to the pattern and the route
- *           will be activated in case of a match.  In addition, any named
- *           capture groups with the names {@code sender}, {@code receiver}, or
- *           {@code type} that match content will populate the corresponding
- *           metadata tokens.  Otherwise, if the content is EDI, these tokens
- *           will be parsed from the EDI according to the specification.</li>
- * </ul>
+ * Each route contains a set of {@link java.util.regex.Pattern Patterns}
+ * that are matched against the metadata for a
+ * {@link RoutableInputStreams.RoutableInputStream RoutableInputStream}, plus
+ * an Enabled flag and a Destination expression.  Empty patterns are
+ * considered "disabled" and match anything (including empty/{@code null}
+ * values).<p/>
+ * Input streams are either EDI or non-EDI, and the set of routes to be
+ * considered for each depends on the {@code content} property.  EDI files
+ * are parsed by the VersaLex EDI libraries, so any route with a defined
+ * {@code content} matching property will be ignored.  Non-EDI files are
+ * matched and parsed (using named capture groups) by the regular expression
+ * in the {@code content} property, so only routes with {@code content}
+ * properties will be considered.
  */
 @Array
 public class RoutingTableProperty {
@@ -29,18 +31,14 @@ public class RoutingTableProperty {
     private static final Gson GSON = new Gson();
 
     /**
-     * Display value for the property
-     * @param value the routing table property value (which is a json object array)
-     * @return the number of records as the display value 
+     * Display value for the Routing Table property
+     * @param value the Routing Table property value (a JSON array)
+     * @return "n Records" (or "1 Record")
      */
     @Display
     public String display(String value) {
-        int size = 0;
-        if (!Strings.isNullOrEmpty(value)) {
-            Route[] routes = GSON.fromJson(value, Route[].class);
-            size = routes.length;
-        }
-        return String.format("%d Record%s", size, size==1?"":"(s)");
+        int size = toRoutes(value).length;
+        return String.format("%d Record%s", size, size==1?"":"s");
     }
   
     @Property
@@ -55,7 +53,7 @@ public class RoutingTableProperty {
 
     @Property
     final public IConnectorProperty<String> content = new PropertyBuilder<>("Content", "")
-        .setDescription("Regular expression to match file contents")
+        .setDescription("Regular expression to match and parse file contents")
         .build();
 
     @Property
@@ -95,11 +93,11 @@ public class RoutingTableProperty {
         .build();
 
     /**
-     * Convert the json array string to list of SRV record objects
-     * @param value the json array string
-     * @return the array of SRV record objects
+     * Deserialize the JSON array into a Java {@code Route[]}.
+     * @param value the JSON array (may be {@code null})
+     * @return a {@code Route[]}, may be {@code Route[0]}, but never {@code null}
      */
     public static Route[] toRoutes(String value) {
-        return GSON.fromJson(value, Route[].class);
+        return Strings.isNullOrEmpty(value) ? new Route[0] : GSON.fromJson(value, Route[].class);
     }
 }
