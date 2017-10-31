@@ -78,7 +78,15 @@ public class TestRouter {
         Route r = new Route().sender("EPES").receiver("3\\d+").type("214");
         Route no = new Route().sender("EPES").receiver("3\\d+").type("21");
         for (RoutableInputStream is : new RoutableInputStreams(bis, 8192)) {
-            System.err.println(is.metadata().toString());
+            assertEquals("EPES", is.metadata().sender().id());
+            assertEquals("02", is.metadata().sender().qualifier());
+            assertEquals("3111190000", is.metadata().receiver().id());
+            assertEquals("08", is.metadata().receiver().qualifier());
+            assertEquals("EPES", is.metadata().groupSender().id());
+            assertEquals("3111190000", is.metadata().groupReceiver().id());
+            assertEquals("QM", is.metadata().function());
+            assertEquals("214", is.metadata().type());
+            assertEquals(String.format("%09d",  59772+count), is.metadata().icn());
             assertEquals(twoonefour[count], CharStreams.toString(new InputStreamReader(is)));
             assertTrue(is.matches(r));
             assertFalse(is.matches(no));
@@ -94,7 +102,15 @@ public class TestRouter {
         Route r = new Route().sender("SCAC").type("214");
         Route no = new Route().sender("EPES").type("214");
         for (RoutableInputStream is : new RoutableInputStreams(bis, 8192)) {
-            System.err.println(is.metadata().toString());
+            assertEquals("SCAC", is.metadata().sender().id());
+            assertEquals("02", is.metadata().sender().qualifier());
+            assertEquals("006922827HUH1", is.metadata().receiver().id());
+            assertEquals("01", is.metadata().receiver().qualifier());
+            assertEquals("SCAC", is.metadata().groupSender().id());
+            assertEquals("006922827HUH1", is.metadata().groupReceiver().id());
+            assertEquals("QM", is.metadata().function());
+            assertEquals("214", is.metadata().type());
+            assertEquals("000010067", is.metadata().icn());
             assertEquals(ryder, CharStreams.toString(new InputStreamReader(is)));
             assertTrue(is.matches(r));
             assertFalse(is.matches(no));
