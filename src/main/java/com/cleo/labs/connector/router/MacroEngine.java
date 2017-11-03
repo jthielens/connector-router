@@ -26,7 +26,7 @@ public class MacroEngine {
     private ScriptEngine engine;
     private Date now;
     private String filename;
-    private EDIMetadata metadata;
+    private Metadata metadata;
 
     /**
      * Enumerates the macro tokens with functions defining how the
@@ -45,15 +45,15 @@ public class MacroEngine {
         receiverQualifier(null, (metadata) -> metadata.receiver().qualifier()),
         groupSenderQualifier(null, (metadata) -> metadata.groupSender().qualifier()),
         groupReceiverQualifier(null, (metadata) -> metadata.groupReceiver().qualifier()),
-        function(null, EDIMetadata::function),
-        type(null, EDIMetadata::type),
-        icn(null, EDIMetadata::icn);
+        function(null, Metadata::function),
+        type(null, Metadata::type),
+        icn(null, Metadata::icn);
 
         private final Function<String, String> filenameFunction;
-        private final Function<EDIMetadata, String> metadataFunction;
+        private final Function<Metadata, String> metadataFunction;
 
         private Token(Function<String,String> filenameFunction,
-                Function<EDIMetadata,String> metadataFunction) {
+                Function<Metadata,String> metadataFunction) {
             this.filenameFunction = filenameFunction;
             this.metadataFunction = metadataFunction;
         }
@@ -94,7 +94,7 @@ public class MacroEngine {
      * @param metadata the metadata to set
      * @param filename the filename to set
      */
-    public MacroEngine(EDIMetadata metadata, String filename) {
+    public MacroEngine(Metadata metadata, String filename) {
         this();
         metadata(metadata);
         filename(filename);
@@ -122,7 +122,7 @@ public class MacroEngine {
      * @param metadata the new metadata to set for the engine
      * @return {@code this} to allow for fluent-style setting
      */
-    public MacroEngine metadata(EDIMetadata metadata) {
+    public MacroEngine metadata(Metadata metadata) {
         this.metadata = metadata;
         if (engine != null && metadata != null) {
             Stream.of(Token.values())

@@ -19,7 +19,7 @@ import com.cleo.connector.api.annotations.Command;
 import com.cleo.connector.api.command.ConnectorCommandResult;
 import com.cleo.connector.api.command.PutCommand;
 import com.cleo.connector.api.interfaces.IConnectorOutgoing;
-import com.cleo.labs.connector.router.RoutableInputStreams.RoutableInputStream;
+import com.cleo.labs.connector.router.Routables.Routable;
 import com.cleo.lexicom.beans.LexFile;
 import com.cleo.lexicom.streams.LexFileOutputStream;
 import com.google.common.base.Strings;
@@ -52,13 +52,13 @@ public class RouterConnectorClient extends ConnectorClient {
         boolean nomatch = false; // this will be set true if any stream is not routable
         MacroEngine engine = new MacroEngine().filename(source.getPath());
 
-        for (RoutableInputStream is : new RoutableInputStreams(source.getStream(), config.getPreviewSize())) {
+        for (Routable routable : new Routables(source.getStream(), config.getPreviewSize())) {
             List<String> destinations = new ArrayList<>();
             for (Route route : routes) {
                 logger.debug(String.format("matching %s for route %s", source.getPath(), route.toString()));
-                if (is.matches(route)) {
-                    engine.metadata(is.metadata());
-                    logger.debug(String.format("matched metadata: %s", is.metadata().toString()));
+                if (routable.matches(route)) {
+                    engine.metadata(routable.metadata()); // metadata not necessarily available until matches()
+                    logger.debug(String.format("matched metadata: %s", routable.metadata().toString()));
                     String output = engine.expand(route.destination());
                     destinations.add(output);
                 }
@@ -89,10 +89,10 @@ public class RouterConnectorClient extends ConnectorClient {
             }
             if (outputs.length == 0) {
                 nomatch = true;
-                ByteStreams.copy(is, ByteStreams.nullOutputStream());
+                ByteStreams.copy(routable.inputStream(), ByteStreams.nullOutputStream());
             } else {
                 ParallelOutputStream out = new ParallelOutputStream(outputs);
-                transfer(is, out, false);
+                transfer(routable.inputStream(), out, false);
             }
         }
 

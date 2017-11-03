@@ -13,7 +13,7 @@ import com.google.gson.Gson;
  * 
  * Each route contains a set of {@link java.util.regex.Pattern Patterns}
  * that are matched against the metadata for a
- * {@link RoutableInputStreams.RoutableInputStream RoutableInputStream}, plus
+ * {@link Routables.RoutableInputStream RoutableInputStream}, plus
  * an Enabled flag and a Destination expression.  Empty patterns are
  * considered "disabled" and match anything (including empty/{@code null}
  * values).<p/>

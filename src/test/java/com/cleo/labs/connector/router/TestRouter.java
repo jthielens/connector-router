@@ -12,7 +12,7 @@ import java.io.InputStreamReader;
 
 import org.junit.Test;
 
-import com.cleo.labs.connector.router.RoutableInputStreams.RoutableInputStream;
+import com.cleo.labs.connector.router.Routables.Routable;
 import com.google.common.base.Joiner;
 import com.google.gson.Gson;
 import com.google.gwt.thirdparty.guava.common.io.CharStreams;
@@ -77,7 +77,7 @@ public class TestRouter {
         int count = 0;
         Route r = new Route().sender("EPES").receiver("3\\d+").type("214");
         Route no = new Route().sender("EPES").receiver("3\\d+").type("21");
-        for (RoutableInputStream is : new RoutableInputStreams(bis, 8192)) {
+        for (Routable is : new Routables(bis, 8192)) {
             assertEquals("EPES", is.metadata().sender().id());
             assertEquals("02", is.metadata().sender().qualifier());
             assertEquals("3111190000", is.metadata().receiver().id());
@@ -87,11 +87,11 @@ public class TestRouter {
             assertEquals("QM", is.metadata().function());
             assertEquals("214", is.metadata().type());
             assertEquals(String.format("%09d",  59772+count), is.metadata().icn());
-            assertEquals(twoonefour[count], CharStreams.toString(new InputStreamReader(is)));
+            assertEquals(twoonefour[count], CharStreams.toString(new InputStreamReader(is.inputStream())));
             assertTrue(is.matches(r));
             assertFalse(is.matches(no));
             count++;
-            is.close();
+            is.inputStream().close();
         }
         assertEquals(4, count);
     }
@@ -101,7 +101,7 @@ public class TestRouter {
         int count = 0;
         Route r = new Route().sender("SCAC").type("214");
         Route no = new Route().sender("EPES").type("214");
-        for (RoutableInputStream is : new RoutableInputStreams(bis, 8192)) {
+        for (Routable is : new Routables(bis, 8192)) {
             assertEquals("SCAC", is.metadata().sender().id());
             assertEquals("02", is.metadata().sender().qualifier());
             assertEquals("006922827HUH1", is.metadata().receiver().id());
@@ -111,11 +111,11 @@ public class TestRouter {
             assertEquals("QM", is.metadata().function());
             assertEquals("214", is.metadata().type());
             assertEquals("000010067", is.metadata().icn());
-            assertEquals(ryder, CharStreams.toString(new InputStreamReader(is)));
+            assertEquals(ryder, CharStreams.toString(new InputStreamReader(is.inputStream())));
             assertTrue(is.matches(r));
             assertFalse(is.matches(no));
             count++;
-            is.close();
+            is.inputStream().close();
         }
         assertEquals(1, count);
     }
@@ -124,19 +124,20 @@ public class TestRouter {
         String notedi = "<Blink><Flim flam=\"boo\">content</Flim></Blink>";
         InputStream bis = new ByteArrayInputStream(notedi.getBytes());
         int count = 0;
-        for (InputStream is : new RoutableInputStreams(bis, 8192)) {
-            String ris = CharStreams.toString(new InputStreamReader(is));
-            if (is instanceof PreviewInputStream) {
-                PreviewInputStream pis = (PreviewInputStream) is;
+        for (Routable routable : new Routables(bis, 8192)) {
+            String ris = CharStreams.toString(new InputStreamReader(routable.inputStream()));
+            if (routable instanceof RoutableContent) {
+                PreviewInputStream pis = (PreviewInputStream) routable.inputStream();
                 String preview = new String(pis.preview());
                 assertEquals(notedi.length(), preview.length());
                 assertEquals(notedi, preview);
+                pis.close();
             } else {
                 fail("not a preview input stream");
             }
             assertEquals(notedi, ris);
             count++;
-            is.close();
+            routable.inputStream().close();
         }
         assertEquals(1, count);
     }
@@ -145,19 +146,20 @@ public class TestRouter {
         String notedi = "<Blink><Flim flam=\"boo\">content</Flim></Blink>";
         InputStream bis = new ByteArrayInputStream(notedi.getBytes());
         int count = 0;
-        for (InputStream is : new RoutableInputStreams(bis, 12)) {
-            String ris = CharStreams.toString(new InputStreamReader(is));
-            if (is instanceof PreviewInputStream) {
-                PreviewInputStream pis = (PreviewInputStream) is;
+        for (Routable routable : new Routables(bis, 12)) {
+            String ris = CharStreams.toString(new InputStreamReader(routable.inputStream()));
+            if (routable instanceof RoutableContent) {
+                PreviewInputStream pis = (PreviewInputStream) routable.inputStream();
                 String preview = new String(pis.preview());
                 assertEquals(12, preview.length());
                 assertEquals(notedi.substring(0, 12), preview);
+                pis.close();
             } else {
                 fail("not a preview input stream");
             }
             assertEquals(notedi, ris);
             count++;
-            is.close();
+            routable.inputStream().close();
         }
         assertEquals(1, count);
     }
@@ -170,24 +172,25 @@ public class TestRouter {
         Route no = new Route().content(".*(?<=a=)(?<sender>\\S*).*(?<=b=)(?<receiver>\\S*).*(?<=c=)(?<type>\\S*).*")
                 .sender("ExP").receiver("xyZ").type("23");
         int count = 0;
-        for (RoutableInputStream is : new RoutableInputStreams(bis, 8192)) {
-            String ris = CharStreams.toString(new InputStreamReader(is));
-            if (is instanceof PreviewInputStream) {
-                PreviewInputStream pis = (PreviewInputStream) is;
+        for (Routable routable : new Routables(bis, 8192)) {
+            String ris = CharStreams.toString(new InputStreamReader(routable.inputStream()));
+            if (routable instanceof RoutableContent) {
+                PreviewInputStream pis = (PreviewInputStream) routable.inputStream();
                 String preview = new String(pis.preview());
                 assertEquals(s.length(), preview.length());
                 assertEquals(s, preview);
+                pis.close();
             } else {
                 fail("not a preview input stream");
             }
             assertEquals(s, ris);
-            assertTrue(is.matches(r));
-            assertEquals("EPP", is.metadata().sender().id());
-            assertEquals("XYZ", is.metadata().receiver().id());
-            assertEquals("123", is.metadata().type());
-            assertFalse(is.matches(no));
+            assertTrue(routable.matches(r));
+            assertEquals("EPP", routable.metadata().sender().id());
+            assertEquals("XYZ", routable.metadata().receiver().id());
+            assertEquals("123", routable.metadata().type());
+            assertFalse(routable.matches(no));
             count++;
-            is.close();
+            routable.inputStream().close();
         }
         assertEquals(1, count);
     }

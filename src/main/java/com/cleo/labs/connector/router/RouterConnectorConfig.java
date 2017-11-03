@@ -4,29 +4,64 @@ import com.cleo.connector.api.property.ConnectorPropertyException;
 import com.cleo.labs.connector.router.Route;
 import com.google.common.base.Strings;
 
+/**
+ * A configuration wrapper around a {@link RouterConnectorClient}
+ * instance and its {@link RouterConnectorSchema}, exposing bean-like
+ * getters for the schema properties converted to their usable forms:
+ * <table border="1">
+ *   <tr><th>Property</th><th>Stored As</th><th>Returned as</th></tr>
+ *   <tr><td>Preview Size</td><td>String matching "\\d+[kmg[b]]"</td><td>int</td></tr>
+ *   <tr><td>Error Destination</td><td>String</td><td>String</td></tr>
+ *   <tr><td>Routes</td><td>JSON array</td><td>{@link Route Route[]}</td></tr>
+ * </table>
+ */
 public class RouterConnectorConfig {
     private RouterConnectorClient client;
     private RouterConnectorSchema schema;
 
+    /**
+     * Constructs a configuration wrapper around a {@link RouterConnectorClient}
+     * instance and its {@link RouterConnectorSchema}, exposing bean-like
+     * getters for the schema properties converted to their usable forms.
+     * @param client the RouterConnectorClient
+     * @param schema its RouterConnectorSchema
+     */
     public RouterConnectorConfig(RouterConnectorClient client, RouterConnectorSchema schema) {
         this.client = client;
         this.schema = schema;
     }
  
+    /**
+     * Gets the Preview Size property converted to an {@code int}.
+     * @return the Preview Size
+     * @throws ConnectorPropertyException
+     */
     public int getPreviewSize () throws ConnectorPropertyException {
         return parseLength(schema.previewSize.getValue(client));
     }
 
+    /**
+     * Gets the Error Destination property.
+     * @return the Error Destination
+     * @throws ConnectorPropertyException
+     */
     public String getErrorDestination() throws ConnectorPropertyException {
         return schema.errorDestination.getValue(client);
     }
 
+    /**
+     * Gets the Routes property, converted from its internal JSON
+     * string representation to a {@link Route Route[]}.
+     * @return an array of Routes, possibly empty, but never {@code null}
+     * @throws ConnectorPropertyException
+     */
     public Route[] getRoutes() throws ConnectorPropertyException {
         String value = schema.routingTable.getValue(client);
         return RoutingTableProperty.toRoutes(value);
     }
 
-    /* Parses an optionally suffixed length:
+    /**
+     * Parses an optionally suffixed length:
      * <ul>
      * <li><b>nnnK</b> nnn KB (technically "kibibytes", * 1024)</li>
      * <li><b>nnnM</b> nnn MB ("mebibytes", * 1024^2)</li>
@@ -36,7 +71,7 @@ public class RouterConnectorConfig {
      * (e.g. kb, mb, ...) is tolerated but not required.
      * @param length the string to parse
      * @return the parsed int
-     * @throws {@link NumberFormatException}
+     * @throws NumberFormatException
      * @see {@link Integer#parseInt(String)}
      */
     public static int parseLength(String length) {

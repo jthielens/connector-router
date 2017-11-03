@@ -14,8 +14,8 @@ import static org.mockito.Mockito.when;
 
 public class TestMacroEngine {
 
-    private static EDIMetadata metadata() {
-        EDIMetadata mock = mock(EDIMetadata.class);
+    private static Metadata metadata() {
+        Metadata mock = mock(Metadata.class);
         when(mock.sender()).thenReturn(new EDIID("FF","FROM"));
         when(mock.receiver()).thenReturn(new EDIID("RR","TO"));
         when(mock.groupSender()).thenReturn(new EDIID("FG","GFROM"));
@@ -92,7 +92,7 @@ public class TestMacroEngine {
         Pattern p = Pattern.compile("(?<sender>\\S+)\\s+(?<receiver>\\S+)\\s+(?<function>\\S+)\\s+(?<type>\\S+)\\s+(?<icn>\\S+)");
         Matcher m = p.matcher("FROM TO GG 214 123456");
         m.matches();
-        EDIMetadata metadata = new EDIMetadata(m);
+        Metadata metadata = new RoutableContent.ContentMetadata(m);
         MacroEngine engine = new MacroEngine(metadata, "filename.ext");
         assertEquals("FROM", engine.expand("${sender}"));
         assertEquals("TO", engine.expand("${receiver}"));
