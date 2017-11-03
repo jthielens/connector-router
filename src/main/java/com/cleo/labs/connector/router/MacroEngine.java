@@ -27,6 +27,7 @@ public class MacroEngine {
     private Date now;
     private String filename;
     private Metadata metadata;
+    private String unique;
 
     /**
      * Enumerates the macro tokens with functions defining how the
@@ -71,6 +72,7 @@ public class MacroEngine {
                 engine.eval("load('nashorn:mozilla_compat.js');"+
                     "function date(format) { return new java.text.SimpleDateFormat(format).format(now); }");
                 engine.put("now", now);
+                unique(unique);
                 metadata(metadata);
                 filename(filename);
             } catch (ScriptException e) {
@@ -85,6 +87,7 @@ public class MacroEngine {
      */
     public MacroEngine() {
         now = new Date();
+        unique = null;
     }
 
     /**
@@ -112,6 +115,20 @@ public class MacroEngine {
             Stream.of(Token.values())
                     .filter((t) -> t.filenameFunction != null)
                     .forEach((t) -> engine.put(t.name(), filename==null ? "" : t.filenameFunction.apply(filename)));
+        }
+        return this;
+    }
+
+    /**
+     * Sets the uniqueness token for the engine.  If the {@link ScriptEngine} is started,
+     * the value is updated in its environment as well.
+     * @param unique the uniqueness token to set for the engine
+     * @return {@code this} to allow for fluent-style setting
+     */
+    public MacroEngine unique(String unique) {
+        this.unique = unique;
+        if (engine != null) {
+            engine.put("unique", Strings.nullToEmpty(unique));
         }
         return this;
     }

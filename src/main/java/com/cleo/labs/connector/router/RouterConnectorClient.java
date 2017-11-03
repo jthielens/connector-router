@@ -13,10 +13,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FilenameUtils;
+
 import com.cleo.connector.api.ConnectorClient;
 import com.cleo.connector.api.ConnectorException;
 import com.cleo.connector.api.annotations.Command;
 import com.cleo.connector.api.command.ConnectorCommandResult;
+import com.cleo.connector.api.command.ConnectorCommandUtil;
 import com.cleo.connector.api.command.PutCommand;
 import com.cleo.connector.api.interfaces.IConnectorOutgoing;
 import com.cleo.labs.connector.router.Routables.Routable;
@@ -36,6 +39,51 @@ public class RouterConnectorClient extends ConnectorClient {
         this.config = new RouterConnectorConfig(this, schema);
     }
 
+    /**
+     * Expands {@code destination} using {@code engine}.  If {@code unique} is set,
+     * the expanded destination will be tested for existence, with a uniqueness
+     * counter (1, 2, ...) inserted until a non-existing filename is achieved.  The
+     * location of the uniqueness token is determined either by the {@code ${unique}}
+     * token being expanded in the destination expression, or for expressions that
+     * do not appear to incorporate {@code ${unique}}, the filename have the counter
+     * inserted before the filename extension.
+     * @param engine the {@link MacroEngine} engine used for expansion
+     * @param destination the destination filename expression
+     * @param unique the {@code -UNI} flag to {@code PUT}
+     * @return an expanded destination, uniquely if so requested
+     */
+    private String uniquely (MacroEngine engine, String destination, boolean unique) {
+        String output = engine.expand(destination);
+        if (unique) {
+            LexFile file = new LexFile(output);
+            int counter = 0;
+            String candidate = output;
+            boolean justSliceIt = false; // when true, forget the engine and use string slicing
+            String base = ""; // when justSliceIt, the base of the filename
+            String ext = ""; // when justSliceIt, the extension of the filename
+            while (file.exists()) {
+                counter++;
+                if (!justSliceIt) {
+                    engine.unique("."+counter);
+                    candidate = engine.expand(destination);
+                    if (candidate.equals(output)) {
+                        justSliceIt = true;
+                        // ${unique} not in pattern -- use traditional .extension
+                        ext = FilenameUtils.getExtension(output).replaceFirst("^(?=[^\\.])","."); // prefix with "." unless empty or already "."
+                        base = output.substring(0, output.length()-ext.length());
+                    }
+                }
+                if (justSliceIt) {
+                    candidate = base+"."+counter+ext;
+                }
+                file = new LexFile(candidate);
+            }
+            output = candidate;
+            engine.unique(null); // reset it for the next file
+        }
+        return output;
+    }
+
     @Command(name = PUT, options = { Unique, Delete })
     public ConnectorCommandResult put(PutCommand put) throws ConnectorException, IOException {
         String destination = put.getDestination().getPath();
@@ -43,7 +91,7 @@ public class RouterConnectorClient extends ConnectorClient {
 
         logger.debug(String.format("PUT local '%s' to remote '%s'", source.getPath(), destination));
 
-        //TODO: boolean unique = ConnectorCommandUtil.isOptionOn(put.getOptions(), Unique);
+        boolean unique = ConnectorCommandUtil.isOptionOn(put.getOptions(), Unique);
 
         Route[] routes = Stream.of(config.getRoutes())
                 .filter((r) -> Strings.isNullOrEmpty(r.filename()) || source.getPath().matches(r.filename()))
@@ -59,8 +107,7 @@ public class RouterConnectorClient extends ConnectorClient {
                 if (routable.matches(route)) {
                     engine.metadata(routable.metadata()); // metadata not necessarily available until matches()
                     logger.debug(String.format("matched metadata: %s", routable.metadata().toString()));
-                    String output = engine.expand(route.destination());
-                    destinations.add(output);
+                    destinations.add(uniquely(engine, route.destination(), unique));
                 }
             }
             OutputStream[] outputs = destinations

@@ -213,6 +213,7 @@ Token               | Description
 `base`              | the base portion of the filename (.extension removed)
 `ext`               | the filename extension (including the . prefix)
 `date('format')`    | the current date/time formatted with ['format'](http://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html)
+`unique`            | a uniqueness token, either empty or `.n` where `n` starts at `1` and counts up as needed
 
 For example, the destination:
 
@@ -242,4 +243,23 @@ scheme:connection/path
 ```
 
 can be used to route a file through a URI.
+
+### Unique Filenames ###
+
+If the `-UNIque` option is used with the connector `PUT` command, the connector will test expanded
+destination expressions for existence in order to prevent overwriting an existing file.  If the
+expanded destination exists, the connector begins inserting a uniqueness token into the filename
+until it can find an unclaimed filename.  Uniqueness tokens include a leading `.` followed by
+the counter, e.g. `.1`, `.2`, etc.
+
+The placement of the uniqueness token can be explicitly controlled by placing the `${unique}`
+token in the destination expression (or some JavaScript expression deriving a value from
+the `unique` string variable, which will either be empty or `.n` as described).
+
+If a destination expression does not explicitly include `${unique}`, the uniqueness token
+will automatically be inserted just before the filename extension, or at the end of the
+filename if there is no extension, e.g.
+
+* `filename.txt` &rarr; `filename.1.txt` &rarr; `filename.2.txt` &hellip;
+* `filename` &rarr; `filename.1` &rarr; `filename.2` &hellip;
 
