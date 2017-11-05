@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.stream.IntStream;
 
 public class Routables implements Iterable<Routables.Routable> {
 
@@ -18,9 +19,12 @@ public class Routables implements Iterable<Routables.Routable> {
     public Routables(InputStream in, int previewSize) {
         this.iterator = Collections.emptyIterator(); // in case we fall through on error
         try {
-            PreviewInputStream preview = new PreviewInputStream(in, Math.min(previewSize, RoutableEDI.PREVIEW_SIZE));
+            PreviewInputStream preview = new PreviewInputStream(in,
+                    IntStream.of(previewSize, RoutableEDI.PREVIEW_SIZE, RoutableHL7.PREVIEW_SIZE).max().getAsInt());
             if (RoutableEDI.canRoute(preview)) {
                 this.iterator = RoutableEDI.getIterator(preview);
+            } else if (RoutableHL7.canRoute(preview)) {
+                this.iterator = RoutableHL7.getIterator(preview);
             } else if (RoutableContent.canRoute(preview)) {
                 this.iterator = RoutableContent.getIterator(preview);
             } else {

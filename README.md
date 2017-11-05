@@ -72,10 +72,10 @@ The routing process proceeds in stages:
 1. First, the filename is matched against the `Filename` rules, and any
    rules not matching a specified pattern are eliminated from further
    matching.
-2. Next, the file content is inspected, with two possible outcomes:
-   EDI (X12, EDIFACT, or TRADACOMS are supported) or not EDI.
+2. Next, the file content is inspected, with three possible outcomes:
+   EDI (X12, EDIFACT, or TRADACOMS are supported), HL7 or not EDI.
 3. Based on the classification of the file, metadata is extracted for
-   further routing.  If the file is EDI, the standard envelope headers
+   further routing.  If the file is EDI or HL7, the standard envelope headers
    are parsed and the Sender, Receiver, Group Sender, Group Receiver,
    Function, and transaction Type are extracted.  The qualifiers for the sender
    and receiver IDs are also extracted, although they are not used for
@@ -134,6 +134,54 @@ _nnn_             | up to _nnn_ bytes are loaded for preview
 The preview buffer is held entirely in memory, so be mindful of practical
 resource limits when configuring the preview size.
 
+### HL7 Handling ###
+
+HL7 is a bit different in structure from the three supported EDI standards.
+When an HL7 file is detected, the `MSH` segment is parsed and some of its
+fields are mapped to the routing table entries as described here.  Unlike
+the EDI formats, HL7 files are not split, so the file is not inspected
+for subsequent `MSH` segments.
+
+Item   | Type | Length | Description | Mapped To
+-------|------|--------|-------------|----------
+MSH-01 | ST   | 1      | Field separator         |
+MSH-02 | ST   | 4      | Encoding characters     |
+MSH-03 | HD   | 180    | Sending Application     | `groupSender` and `groupSenderQualifier`
+MSH-04 | HD   | 180    | Sending Facility        | `sender` and `senderQualifier`
+MSH-05 | HD   | 180    | Receiving Application   | `groupReceiver` and `groupReceiverQualifier`
+MSH-06 | HD   | 180    | Receiving Facility      | `receiver` and `receiverQualifier`
+MSH-07 | TS   | 26     | Date/Time Of Message    |
+MSH-08 | ST   | 40     | Security                |
+MSH-09 | ST   | 7      | Message Type            | `type` and `function`
+MSH-10 | ST   | 20     | Message Control ID      | `icn`
+MSH-11 | PT   | 3      | Processing ID           |
+MSH-12 | ID   | 8      | Version ID              |
+MSH-13 | NM   | 15     | Sequence Number         |
+MSH-14 | ST   | 180    | Continuation Pointer    |
+MSH-15 | ID   | 2      | Accept Acknowledgment Type      |
+MSH-16 | ID   | 2      | Application Acknowledgment Type |
+MSH-17 | ID   | 2      | Country Code            |
+MSH-18 | ID   | 6      | Character Set           |
+MSH-19 | CE   | 60     | Principal Language Of Message   |
+
+The HL7 Message Type comprises a message type ID and trigger event ID.
+The message type ID is mapped to the EDI `type` and the trigger event
+ID is mapped to the `function`.  For example, a message with a MSH-09
+message type of `ADT^A04` would be parsed into a `type` of `ADT` (Admit
+Discharge Transfer) with a `function` of `A04` (Register a patient).
+
+The sender and receiver HL7 types are `HD` (Hierarchic Designator), which
+may have up to three sub-composites, with the first part optional.  If more
+than two parts are found, the first part is discarded, the second mapped
+to the appropriate identifier, and the third is mapped to the associated
+qualified.  If two parts are found, the first and second are mapped to
+the identifier and its qualifier.  If there are no sub-composites, the
+entire value is mapped to the identifier and the qualifier is blank.
+
+HL7 detection depends on successful parsing of the `MSH` segment into
+at least 12 parts (up to `MSH-12` "Version ID") and a Version ID that
+starts with `2.`.
+
 ## Metadata Extraction ##
 
 For non-EDI files for which a preview is matched against a filter pattern,
@@ -190,19 +238,19 @@ to metadata pre-loaded into the JavaScript engine's environment suffice.
 
 The following primitives are supported:
 
-Token                    | X12   | EDIFACT | TRADACOMS | non-EDI
--------------------------|-------|---------|-----------|--------
-`sender`                 | ISA06 | UNB02:1 | STX02:1   | `(?<sender>...)`
-`receiver`               | ISA08 | UNB03:1 | STX03:1   | `(?<receiver>...)`
-`groupSender`            | GS02  | UNG02:1 |           | `(?<groupSender>...)`
-`groupReceiver`          | GS03  | UNG03:1 |           | `(?<groupReceiver>...)`
-`senderQualifier`        | ISA05 | UNB02:2 |           |
-`receiverQualifier`      | ISA07 | UNB03:2 |           |
-`groupSenderQualifier`   |       | UNG02:2 |           |
-`groupReceiverQualifier` |       | UNG03:2 |           |
-`function`               | GS01  | UNG01   |           | `(?<function>...)`
-`type`                   | ST01  | UNH09:1 | MHD02     | `(?<type>...)`
-`icn`                    | ISA13 | UNB05:1 | STX05:1   | `(?<icn>...)`
+Token                    | X12   | EDIFACT | TRADACOMS | HL7      | non-EDI
+-------------------------|-------|---------|-----------|----------|--------
+`sender`                 | ISA06 | UNB02:1 | STX02:1   | MSH-04.2 | `(?<sender>...)`
+`receiver`               | ISA08 | UNB03:1 | STX03:1   | MSH-06.2 | `(?<receiver>...)`
+`groupSender`            | GS02  | UNG02:1 |           |          | `(?<groupSender>...)`
+`groupReceiver`          | GS03  | UNG03:1 |           |          | `(?<groupReceiver>...)`
+`senderQualifier`        | ISA05 | UNB02:2 |           | MSH-04.3 |
+`receiverQualifier`      | ISA07 | UNB03:2 |           | MSH-06.3 |
+`groupSenderQualifier`   |       | UNG02:2 |           |          |
+`groupReceiverQualifier` |       | UNG03:2 |           |          |
+`function`               | GS01  | UNG01   |           | MSH-09.2 | `(?<function>...)`
+`type`                   | ST01  | UNH09:1 | MHD02     | MSH-09.1 | `(?<type>...)`
+`icn`                    | ISA13 | UNB05:1 | STX05:1   | MSH-10   | `(?<icn>...)`
 
 The following file-level primitives are also supported, but do not depend
 on metadata extraction or EDI parsing:
