@@ -165,7 +165,7 @@ public class MacroEngine {
         Matcher m = SQUIGGLE.matcher(input);
         StringBuffer sb = new StringBuffer();
         while (m.find()) {
-            m.appendReplacement(sb, expr(m.group("expr")));
+            m.appendReplacement(sb, Matcher.quoteReplacement(expr(m.group("expr"))));
         }
         m.appendTail(sb);
         return sb.toString();
