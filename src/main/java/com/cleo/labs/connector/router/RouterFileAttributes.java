@@ -7,57 +7,70 @@ import java.nio.file.attribute.FileTime;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
+import com.cleo.connector.api.helper.Logger;
+
 /**
  * Router file attribute views
  */
 public class RouterFileAttributes implements DosFileAttributes, DosFileAttributeView {
-    FileTime now = FileTime.from(new Date().getTime(), TimeUnit.MILLISECONDS);
+    private Logger logger;
+    private FileTime now = FileTime.from(new Date().getTime(), TimeUnit.MILLISECONDS);
 
-    public RouterFileAttributes() {
+    public RouterFileAttributes(Logger logger) {
+        this.logger = logger;
     }
 
     @Override
     public FileTime lastModifiedTime() {
+        logger.debug(String.format("lastModifiderTime()=%s", now.toString()));
         return now;
     }
 
     @Override
     public FileTime lastAccessTime() {
+        logger.debug(String.format("lastAccessTime()=%s", now.toString()));
         return now;
     }
 
     @Override
     public FileTime creationTime() {
+        logger.debug(String.format("creationTime()=%s", now.toString()));
         return now;
     }
 
     @Override
     public boolean isRegularFile() {
-        return false; // pretend the .zip file is a directory containing the ZipEntrys
+        logger.debug("isRegularFile()=true");
+        return true; // pretend the router file is a plain file
     }
 
     @Override
     public boolean isDirectory() {
-        return true; // pretend the .zip file is a directory containing the ZipEntrys
+        logger.debug("isDirectory()=false");
+        return false; // pretend the router file is a plain file
     }
 
     @Override
     public boolean isSymbolicLink() {
-        return false; // pretend the .zip file is a directory containing the ZipEntrys
+        logger.debug("isSymbolicLink()=false");
+        return false; // pretend the router file is a plain file
     }
 
     @Override
     public boolean isOther() {
-        return false; // pretend the .zip file is a directory containing the ZipEntrys
+        logger.debug("isOther()=false");
+        return false; // pretend the router file is a plain file
     }
 
     @Override
     public long size() {
+        logger.debug("size()=0L");
         return 0L;
     }
 
     @Override
     public Object fileKey() {
+        logger.debug("fileKey()=null");
         return null;
     }
 
@@ -70,7 +83,7 @@ public class RouterFileAttributes implements DosFileAttributes, DosFileAttribute
 
     @Override
     public String name() {
-        return "zipfile";
+        return "routerfile";
     }
 
     @Override
@@ -100,21 +113,25 @@ public class RouterFileAttributes implements DosFileAttributes, DosFileAttribute
 
     @Override
     public boolean isReadOnly() {
-        return true;
+        logger.debug("isReadOnly()=false");
+        return false;
     }
 
     @Override
     public boolean isHidden() {
+        logger.debug("isHidden()=false");
         return false;
     }
 
     @Override
     public boolean isArchive() {
+        logger.debug("isArchive()=false");
         return false;
     }
 
     @Override
     public boolean isSystem() {
+        logger.debug("isSystem()=false");
         return false;
     }
 
