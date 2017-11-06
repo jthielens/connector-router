@@ -184,7 +184,7 @@ starts with `2.`.
 
 ## Metadata Extraction ##
 
-For non-EDI files for which a preview is matched against a filter pattern,
+For non-EDI files for which a preview is matched against a `Content` filter pattern,
 the filter pattern may include capture groups that describe metadata values
 to extract from the content.
 
@@ -228,6 +228,69 @@ Expression                | Description
 `function`                | the functional group identification
 `type`                    | the transaction type
 `icn`                     | the interchange control number
+
+### Named `Content` Patterns ###
+
+Often when routing based on parsed content a single metadata extraction
+and matching pattern will be used to select between multiple destinations
+based on the extracted values (since EDI and HL7 have well-known fixed
+schemas, the routing table naturally supports this use case).
+
+Since the routing table combines the metadata extraction pattern
+in the `Content` column with metadata matching patterns in the `Sender`,
+`Receiver`, etc. columns, the same `Content` metadata extraction
+pattern might have to be repeated for each matching pattern and
+destination:
+
+Content                                | Sender | Destination
+---------------------------------------|--------|------------
+`.*?<token>(?<sender>[^<]*)</token>.*` | Acme   | /files/inbound/acmebrands
+`.*?<token>(?<sender>[^<]*)</token>.*` | Bigco  | /files/inbound/bigfoods
+
+To better support this kind of routing, the router connector allows
+`Content` patterns to be named and reused.  A name starts with a letter
+a-z or A-Z, followed by any number of letters or digits a-z, A-Z, or 0-9.
+If a `Content` pattern starts with `name:`, any text following the `name:`
+will be parsed as the matching pattern and the metadata results will be
+stored and associated with `name`.  Any subsequence references in the same
+routing table to `name:` without a pattern will re-use the same metadata.
+
+Content                                       | Sender | Destination
+----------------------------------------------|--------|------------
+`sender:.*?<token>(?<sender>[^<]*)</token>.*` | Acme   | /files/inbound/acmebrands
+`sender:`                                     | Bigco  | /files/inbound/bigfoods
+
+Since the `Destination` is technically optional (although no file will be delivered
+to an empty destination), the table can also designed to separate pattern definitions
+from references:
+
+Content                                       | Sender | Destination
+----------------------------------------------|--------|------------
+`sender:.*?<token>(?<sender>[^<]*)</token>.*` |        |
+`sender:`                                     | Acme   | /files/inbound/acmebrands
+`sender:`                                     | Bigco  | /files/inbound/bigfoods
+
+Often it is convenient to separate the metadata extraction patterns into
+multiple patterns, for example, when tokens may appear in any order.  The
+named patterns can be combined to help with this:
+
+Content                                     | Sender | Receiver | Destination
+--------------------------------------------|--------|----------|------------
+`sender:.*?<from>(?<sender>[^<]*)</from>.*` |        |          |
+`receiver:.*?<to>(?<receiver>[^<]*)</to>.*` |        |          |
+`sender,receiver:`                          | Usinc  | Acme     | /files/inbound/acmebrands
+`sender,receiver:`                          | Usinc  | Bigco    | /files/inbound/bigfoods
+
+Note:
+
+>* If a pattern appears after a name list `name1,name2:pattern`, the `pattern` replaces
+>any previous pattern for `name1`, but `name2` will reference a previous pattern.
+>
+> * Whitespace may appear around the `,` or before the `:`, but whitespace after the
+> `:` is considered part of the pattern.
+> 
+> * To avoid having a pattern starting with `name:` being interpreted as a name
+> instead of part of the pattern, surround it with a non-capturing group `(?:name:)`. 
 
 ## Destination Expressions ##
 

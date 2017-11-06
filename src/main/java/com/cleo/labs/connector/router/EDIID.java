@@ -70,6 +70,14 @@ public class EDIID {
     }
 
     /**
+     * Copy constructor.
+     * @param copy the EDIID to copy
+     */
+    public EDIID(EDIID copy) {
+        this.id = copy.id;
+        this.qualifier = copy.qualifier;
+    }
+    /**
      * Sets the qualifier and id for the {@code EDIID} by
      * parsing element {@code index} (0-relative) from an
      * EDISegment.  According to EDIFACT conventions, the

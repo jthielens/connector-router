@@ -54,7 +54,7 @@ public class RouterConnectorClient extends ConnectorClient {
      */
     private String uniquely (MacroEngine engine, String destination, boolean unique) {
         String output = engine.expand(destination);
-        if (unique) {
+        if (unique && !Strings.isNullOrEmpty(output)) {
             LexFile file = new LexFile(output);
             int counter = 0;
             String candidate = output;
@@ -107,7 +107,12 @@ public class RouterConnectorClient extends ConnectorClient {
                 if (routable.matches(route)) {
                     engine.metadata(routable.metadata()); // metadata not necessarily available until matches()
                     logger.debug(String.format("matched metadata: %s", routable.metadata().toString()));
-                    destinations.add(uniquely(engine, route.destination(), unique));
+                    if (!Strings.isNullOrEmpty(route.destination())) {
+                        String output = uniquely(engine, route.destination(), unique);
+                        if (!Strings.isNullOrEmpty(output)) {
+                            destinations.add(output);
+                        }
+                    }
                 }
             }
             OutputStream[] outputs = destinations
@@ -121,7 +126,6 @@ public class RouterConnectorClient extends ConnectorClient {
                         } })
                     .filter(Objects::nonNull)
                     .toArray(OutputStream[]::new);
-            // TODO: unique
             if (outputs.length == 0)  {
                 String errorDestination = config.getErrorDestination();
                 if (!Strings.isNullOrEmpty(errorDestination)) {

@@ -151,8 +151,8 @@ public class TestRouter {
             if (routable instanceof RoutableContent) {
                 PreviewInputStream pis = (PreviewInputStream) routable.inputStream();
                 String preview = new String(pis.preview());
-                assertEquals(12, preview.length());
-                assertEquals(notedi.substring(0, 12), preview);
+                assertTrue(preview.length()>=12);
+                assertEquals(notedi.substring(0, preview.length()), preview);
                 pis.close();
             } else {
                 fail("not a preview input stream");
@@ -193,5 +193,78 @@ public class TestRouter {
             routable.inputStream().close();
         }
         assertEquals(1, count);
+    }
+    @Test
+    public final void testNamedContent() throws IOException {
+        String s = "header is\na=EPP b=XYZ\nc=123 with lots\nof other stuff";
+        InputStream bis = new ByteArrayInputStream(s.getBytes());
+        Route r1 = new Route().content("test:.*?(?<=a=)(?<sender>\\S*).*(?<=b=)(?<receiver>\\S*).*(?<=c=)(?<type>\\S*).*")
+                .sender("EPP").receiver("XYZ").type("123");
+        Route r2 = new Route().content("test:")
+                .sender("EPP").receiver("XYZ").type("123");
+        Route r3 = new Route().content("notest:")
+                .sender("EPP").receiver("XYZ").type("123");
+        Route r4 = new Route().content("test:.*?(?<=a=)(?<receiver>\\S*).*(?<=b=)(?<sender>\\S*).*(?<=c=)(?<type>\\S*).*");
+        Route r5 = new Route().content("nomatch:this does not match");
+        for (Routable routable : new Routables(bis, 8192)) {
+            String ris = CharStreams.toString(new InputStreamReader(routable.inputStream()));
+            if (routable instanceof RoutableContent) {
+                PreviewInputStream pis = (PreviewInputStream) routable.inputStream();
+                String preview = new String(pis.preview());
+                assertEquals(s.length(), preview.length());
+                assertEquals(s, preview);
+                pis.close();
+            } else {
+                fail("not a preview input stream");
+            }
+            assertEquals(s, ris);
+            assertTrue(routable.matches(r1));
+            assertEquals("EPP", routable.metadata().sender().id());
+            assertEquals("XYZ", routable.metadata().receiver().id());
+            assertEquals("123", routable.metadata().type());
+            assertTrue(routable.matches(r2));
+            assertFalse(routable.matches(r3));
+            assertTrue(routable.matches(r4));
+            assertEquals("XYZ", routable.metadata().sender().id());
+            assertEquals("EPP", routable.metadata().receiver().id());
+            assertEquals("123", routable.metadata().type());
+            assertFalse(routable.matches(r5));
+            assertFalse(routable.matches(new Route().content("nomatch:")));
+            routable.inputStream().close();
+        }
+    }
+    @Test
+    public final void testMultiNamedContent() throws IOException {
+        String s = "header is\na=EPP b=XYZ\nc=123 with lots\nof other stuff";
+        InputStream bis = new ByteArrayInputStream(s.getBytes());
+        Route r1 = new Route().content("sender:.*?(?<=a=)(?<sender>\\S*).*");
+        Route r2 = new Route().content("receiver:.*?(?<=b=)(?<receiver>\\S*).*");
+        Route r3 = new Route().content("type:.*?(?<=c=)(?<type>\\S*).*");
+        Route r4 = new Route().content("sender,receiver,type:")
+                .sender("EPP").receiver("XYZ").type("123");
+        Route r5 = new Route().content("sender ,  receiver , type   :") // testing white space
+                .sender("EPP").receiver("XYZ").type("123");
+        for (Routable routable : new Routables(bis, 8192)) {
+            String ris = CharStreams.toString(new InputStreamReader(routable.inputStream()));
+            if (routable instanceof RoutableContent) {
+                PreviewInputStream pis = (PreviewInputStream) routable.inputStream();
+                String preview = new String(pis.preview());
+                assertEquals(s.length(), preview.length());
+                assertEquals(s, preview);
+                pis.close();
+            } else {
+                fail("not a preview input stream");
+            }
+            assertEquals(s, ris);
+            assertTrue(routable.matches(r1));
+            assertTrue(routable.matches(r2));
+            assertTrue(routable.matches(r3));
+            assertTrue(routable.matches(r4));
+            assertEquals("EPP", routable.metadata().sender().id());
+            assertEquals("XYZ", routable.metadata().receiver().id());
+            assertEquals("123", routable.metadata().type());
+            assertTrue(routable.matches(r5));
+            routable.inputStream().close();
+        }
     }
 }
