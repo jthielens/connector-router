@@ -374,3 +374,8 @@ filename if there is no extension, e.g.
 * `filename.txt` &rarr; `filename.1.txt` &rarr; `filename.2.txt` &hellip;
 * `filename` &rarr; `filename.1` &rarr; `filename.2` &hellip;
 
+This calculation of unique filenames depends on route processing.  In the context
+of a `PUT` command, this is easy to control.  But when the use of the connector
+is most convenient through a URI `router:host` and `LCOPY` commands, the `-UNI`
+flag to `LCOPY` will not work.  In this case, set the `Force Unique` property on
+the connector.

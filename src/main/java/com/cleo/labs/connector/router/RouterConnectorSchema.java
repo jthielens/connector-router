@@ -39,6 +39,11 @@ public class RouterConnectorSchema extends ConnectorConfig {
             .build();
 
     @Property
+    final IConnectorProperty<Boolean> forceUnique = new PropertyBuilder<>("ForceUnique", false)
+            .setDescription("Always create unique filenames as if PUT -UNI were used")
+            .build();
+
+    @Property
     final IConnectorProperty<Boolean> enableDebug = CommonProperties.of(CommonProperty.EnableDebug);
 
     @Info

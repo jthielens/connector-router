@@ -50,6 +50,15 @@ public class RouterConnectorConfig {
     }
 
     /**
+     * Gets the Force Unique property.
+     * @return the Force Unique property
+     * @throws ConnectorPropertyException
+     */
+    public boolean getForceUnique() throws ConnectorPropertyException {
+        return schema.forceUnique.getValue(client);
+    }
+
+    /**
      * Gets the Routes property, converted from its internal JSON
      * string representation to a {@link Route Route[]}.
      * @return an array of Routes, possibly empty, but never {@code null}

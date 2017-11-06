@@ -114,7 +114,8 @@ public class RouterConnectorClient extends ConnectorClient {
         logger.debug(String.format("PUT local '%s' to remote '%s' (matching filename '%s')",
                 source.getPath(), destination, filename));
 
-        boolean unique = ConnectorCommandUtil.isOptionOn(put.getOptions(), Unique);
+        boolean unique = config.getForceUnique() ||
+                ConnectorCommandUtil.isOptionOn(put.getOptions(), Unique);
 
         Route[] routes = Stream.of(config.getRoutes())
                 .filter((r) -> Strings.isNullOrEmpty(r.filename()) || filename.matches(r.filename()))
