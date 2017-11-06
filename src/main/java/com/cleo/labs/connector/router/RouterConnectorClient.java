@@ -84,31 +84,55 @@ public class RouterConnectorClient extends ConnectorClient {
         return output;
     }
 
+    /**
+     * Figures out the best intent of the user for the destination filename to use:
+     * <ul><li>if a destination path is provided, use it (e.g. PUT source destination or
+     *         through a URI, LCOPY source router:host/destination).</li>
+     *     <li>if the destination path matches the host alias (e.g. LCOPY source router:host),
+     *         prefer the source filename</li>
+     *     <li>if the destination is not useful and the source is not empty, us it</li>
+     * @param put the {@link PutCommand}
+     * @return a String to use as the filename
+     */
+    private String bestFilename(PutCommand put) {
+        String destination = put.getDestination().getPath();
+        if (Strings.isNullOrEmpty(destination) || destination.equals(getHost().getAlias())) {
+            String source = put.getSource().getPath();
+            if (!Strings.isNullOrEmpty(source)) {
+                destination = source;
+            }
+        }
+        return destination;
+    }
+
     @Command(name = PUT, options = { Unique, Delete })
     public ConnectorCommandResult put(PutCommand put) throws ConnectorException, IOException {
         String destination = put.getDestination().getPath();
         IConnectorOutgoing source = put.getSource();
+        String filename = bestFilename(put);
 
-        logger.debug(String.format("PUT local '%s' to remote '%s'", source.getPath(), destination));
+        logger.debug(String.format("PUT local '%s' to remote '%s' (matching filename '%s')",
+                source.getPath(), destination, filename));
 
         boolean unique = ConnectorCommandUtil.isOptionOn(put.getOptions(), Unique);
 
         Route[] routes = Stream.of(config.getRoutes())
-                .filter((r) -> Strings.isNullOrEmpty(r.filename()) || source.getPath().matches(r.filename()))
+                .filter((r) -> Strings.isNullOrEmpty(r.filename()) || filename.matches(r.filename()))
                 .toArray(Route[]::new);
 
         boolean nomatch = false; // this will be set true if any stream is not routable
-        MacroEngine engine = new MacroEngine().filename(source.getPath());
+        MacroEngine engine = new MacroEngine().filename(filename);
 
         for (Routable routable : new Routables(source.getStream(), config.getPreviewSize())) {
             List<String> destinations = new ArrayList<>();
             for (Route route : routes) {
-                logger.debug(String.format("matching %s for route %s", source.getPath(), route.toString()));
+                logger.debug(String.format("matching %s for route %s", filename, route.toString()));
                 if (routable.matches(route)) {
                     engine.metadata(routable.metadata()); // metadata not necessarily available until matches()
                     logger.debug(String.format("matched metadata: %s", routable.metadata().toString()));
                     if (!Strings.isNullOrEmpty(route.destination())) {
                         String output = uniquely(engine, route.destination(), unique);
+                        logger.debug(String.format("routing file to: %s", output));
                         if (!Strings.isNullOrEmpty(output)) {
                             destinations.add(output);
                         }
@@ -149,7 +173,7 @@ public class RouterConnectorClient extends ConnectorClient {
 
         if (nomatch) {
             return new ConnectorCommandResult(ConnectorCommandResult.Status.Error,
-                    String.format("No matching routes found for '%s'.", source.getPath()));
+                    String.format("No matching routes found for '%s'.", filename));
         } else {
             return new ConnectorCommandResult(ConnectorCommandResult.Status.Success);
         }
@@ -166,7 +190,9 @@ public class RouterConnectorClient extends ConnectorClient {
     @Command(name = ATTR)
     public BasicFileAttributeView getAttributes(String path) throws ConnectorException, IOException {
         logger.debug(String.format("ATTR '%s'", path));
-        return new RouterFileAttributes();
+        throw new ConnectorException(String.format("'%s' does not exist or is not accessible", path),
+                ConnectorException.Category.fileNonExistentOrNoAccess);
+        //return new RouterFileAttributes(logger);
     }
 
 }
