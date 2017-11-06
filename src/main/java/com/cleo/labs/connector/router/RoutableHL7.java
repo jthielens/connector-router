@@ -90,6 +90,10 @@ public class RoutableHL7 implements Routables.Routable {
         }
 
         public String unescape(String input) {
+            if (!valid) {
+                // no escapes defined
+                return input;
+            }
             Pattern escapes = Pattern.compile(Pattern.quote(escapeCharacter)+"([TSFRE]|X(?:[0-9a-fA-F]{2})+)"+Pattern.quote(escapeCharacter));
             Matcher m = escapes.matcher(input);
             StringBuffer sb = new StringBuffer();
