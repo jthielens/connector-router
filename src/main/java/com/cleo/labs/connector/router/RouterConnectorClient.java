@@ -147,6 +147,7 @@ public class RouterConnectorClient extends ConnectorClient {
                         try {
                             return new LexFileOutputStream(f);
                         } catch (Exception e) {
+                            logger.logWarning(String.format("Destination '%s' skipped due to error: %s", f, e.getMessage()));
                             return null;
                         } })
                     .filter(Objects::nonNull)
@@ -159,6 +160,7 @@ public class RouterConnectorClient extends ConnectorClient {
                                 new LexFileOutputStream(new LexFile(engine.expand(errorDestination)))
                         };
                     } catch (Exception e) {
+                        logger.logWarning(String.format("Error Destination '%s' ignored due to error: %s", errorDestination, e.getMessage()));
                         // well, we tried
                     }
                 }
