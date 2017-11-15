@@ -90,7 +90,7 @@ public class RouterConnectorClient extends ConnectorClient {
      *         through a URI, LCOPY source router:host/destination).</li>
      *     <li>if the destination path matches the host alias (e.g. LCOPY source router:host),
      *         prefer the source filename</li>
-     *     <li>if the destination is not useful and the source is not empty, us it</li>
+     *     <li>if the destination is not useful and the source is not empty, use it</li>
      * @param put the {@link PutCommand}
      * @return a String to use as the filename
      */
