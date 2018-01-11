@@ -53,17 +53,20 @@ public class RoutableEDI extends InputStream implements Routable {
         private void step() {
             try {
                 this.nextfilter = new RoutableEDI(edi);
+            } catch (EOFException e) {
+                this.nextfilter = null;
             } catch (IOException e) {
                 this.nextfilter = null;
+                throw new IllegalArgumentException("EDI Syntax Error", e);
             }
             done = nextfilter == null;
         }
 
         public RoutableEDIIterator(PreviewInputStream preview) {
             try {
-                this.edi = new EDI(preview);
                 this.nextfilter = null;
                 this.done = false;
+                this.edi = new EDI(preview);
             } catch (IOException e) {
                 this.edi = null;
                 this.nextfilter = null;
@@ -92,11 +95,18 @@ public class RoutableEDI extends InputStream implements Routable {
         super();
         this.edi = edi;
         this.metadata = EDIMetadata.getEDIMetadata(edi);
+        if (this.metadata == null) {
+            throw new IOException("EDI syntax error: no envelope found");
+        }
         this.preview = new ArrayList<>();
         while (!metadata.typed()) {
             EDISegment segment = edi.getNextSegment();
             if (segment == null) {
-                throw new EOFException("EDI syntax error: incomplete envelope");
+                if (preview.isEmpty()) {
+                    throw new EOFException();
+                } else {
+                    throw new IOException("EDI syntax error: incomplete envelope");
+                }
             }
             metadata.process(segment);
             preview.add(segment);

@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 import com.cleo.labs.connector.router.Routables.Routable;
 import com.google.common.base.Strings;
 
-public class RoutableContent implements Routables.Routable {
+public class RoutableContent implements Routable {
 
     public static boolean canRoute(PreviewInputStream preview) {
         return true; // for now
