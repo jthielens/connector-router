@@ -1,7 +1,5 @@
 package com.cleo.labs.connector.router;
 
-import com.cleo.lexicom.edi.EDIElement;
-import com.cleo.lexicom.edi.EDISegment;
 import com.google.common.base.Strings;
 
 /**

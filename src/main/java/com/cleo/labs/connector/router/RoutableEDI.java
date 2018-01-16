@@ -10,9 +10,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.cleo.labs.connector.router.Routables.Routable;
-import com.cleo.lexicom.edi.EDI;
-import com.cleo.lexicom.edi.EDIElement;
-import com.cleo.lexicom.edi.EDISegment;
 import com.google.common.base.Strings;
 
 public class RoutableEDI extends InputStream implements Routable {
@@ -28,9 +25,10 @@ public class RoutableEDI extends InputStream implements Routable {
         try {
             EDI tester = new EDI(new ByteArrayInputStream(preview.preview()));
             switch (tester.getType()) {
-            case EDI.X12:
-            case EDI.EDIFACT:
-            case EDI.TRADACOMS:
+            case X12:
+            case FUZZYX12:
+            case EDIFACT:
+            case TRADACOMS:
                 return true;
             default:
                 // fall through
@@ -94,22 +92,24 @@ public class RoutableEDI extends InputStream implements Routable {
     public RoutableEDI(EDI edi) throws IOException {
         super();
         this.edi = edi;
+        EDISegment segment = edi.getNextSegment();
+        if (segment == null) {
+            throw new EOFException();
+        }
         this.metadata = EDIMetadata.getEDIMetadata(edi);
         if (this.metadata == null) {
             throw new IOException("EDI syntax error: no envelope found");
         }
         this.preview = new ArrayList<>();
+        preview.add(segment);
+        metadata.process(segment);
         while (!metadata.typed()) {
-            EDISegment segment = edi.getNextSegment();
+            segment = edi.getNextSegment();
             if (segment == null) {
-                if (preview.isEmpty()) {
-                    throw new EOFException();
-                } else {
-                    throw new IOException("EDI syntax error: incomplete envelope");
-                }
+                throw new IOException("EDI syntax error: incomplete envelope");
             }
-            metadata.process(segment);
             preview.add(segment);
+            metadata.process(segment);
         }
         load();
     }
@@ -210,13 +210,16 @@ public class RoutableEDI extends InputStream implements Routable {
         public static EDIMetadata getEDIMetadata(EDI edi) {
             EDIMetadata result;
             switch (edi.getType()) {
-            case EDI.X12:
+            case X12:
                 result = new X12Metadata();
                 break;
-            case EDI.EDIFACT:
+            case FUZZYX12:
+                result = new X12Metadata().fuzzy(true);
+                break;
+            case EDIFACT:
                 result = new EdifactMetadata();
                 break;
-            case EDI.TRADACOMS:
+            case TRADACOMS:
                 result = new TradacomsMetadata();
                 break;
             default:
@@ -333,6 +336,27 @@ public class RoutableEDI extends InputStream implements Routable {
         @Override
         public boolean isLastSegment(EDISegment segment) {
             return segment.getName().equals("IEA");
+        }
+        /**
+         * Is this strict or fuzzy X12?
+         */
+        private boolean fuzzy = false;
+        /**
+         * Set the fuzzy flag
+         * @param fuzzy the fuzzy flag
+         * @return this
+         */
+        public X12Metadata fuzzy(boolean fuzzy) {
+            this.fuzzy = fuzzy;
+            return this;
+        }
+        @Override
+        public boolean matches(Route route) {
+            return !fuzzy && super.matches(route);
+        }
+        @Override
+        public String toString() {
+            return super.toString() + " fuzzy="+fuzzy;
         }
     }
     private static class EdifactMetadata extends EDIMetadata {

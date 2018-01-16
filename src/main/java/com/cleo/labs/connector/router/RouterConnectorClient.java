@@ -125,6 +125,7 @@ public class RouterConnectorClient extends ConnectorClient {
         MacroEngine engine = new MacroEngine().filename(filename);
 
         for (Routable routable : new Routables(source.getStream(), config.getPreviewSize())) {
+            logger.debug(String.format("new routable metadata: %s", routable.metadata().toString()));
             List<String> destinations = new ArrayList<>();
             for (Route route : routes) {
                 logger.debug(String.format("matching %s for route %s", filename, route.toString()));
@@ -155,12 +156,15 @@ public class RouterConnectorClient extends ConnectorClient {
             if (outputs.length == 0)  {
                 String errorDestination = config.getErrorDestination();
                 if (!Strings.isNullOrEmpty(errorDestination)) {
+                    String output = null;
                     try {
+                        output = uniquely(engine, errorDestination, unique);
+                        logger.debug(String.format("routing file to error destination: %s", output));
                         outputs = new OutputStream[] {
-                                new LexFileOutputStream(new LexFile(engine.expand(errorDestination)))
+                                new LexFileOutputStream(new LexFile(output))
                         };
                     } catch (Exception e) {
-                        logger.logWarning(String.format("Error Destination '%s' ignored due to error: %s", errorDestination, e.getMessage()));
+                        logger.logWarning(String.format("Error Destination '%s' ignored due to error: %s", output, e.getMessage()));
                         // well, we tried
                     }
                 }
