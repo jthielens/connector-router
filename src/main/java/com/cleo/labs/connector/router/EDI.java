@@ -1,5 +1,6 @@
 package com.cleo.labs.connector.router;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -50,7 +51,7 @@ public class EDI {
      *            the EDI input stream
      */
     public EDI(InputStream in) throws IOException {
-        this.in = in;
+        this.in = new BufferedInputStream(in, BUFFER_SIZE);
         detect();
     }
 
@@ -453,44 +454,30 @@ public class EDI {
     }
 
     /*------------------------------------------------------------------------------
-     * Read from the input stream, and combine the remaining bytes with the newly
-     * read bytes in the data byte buffer
+     * Discard used bytes from the beginning of the buffer and refill the buffer
+     * from the input stream.
      *----------------------------------------------------------------------------*/
     private void read() throws IOException {
         if (!eof) {
-            byte[] remainingBytes = new byte[this.len - this.index];
-            System.arraycopy(this.bytes, this.index, remainingBytes, 0, this.len - this.index);
+            // compact this.bytes
+            System.arraycopy(this.bytes, this.index, this.bytes, 0, this.len - this.index);
+            this.len -= this.index;
+            this.index = 0;
 
-            int len = this.bytes.length;
-            if (len > BUFFER_SIZE)
-                len = BUFFER_SIZE;
-            int off = 0;
-            this.len = 0;
-            while (len > 0) {
-                int read = in.read(this.bytes, off, len);
+            // backfill the tail portion of this.bytes
+            while (this.len < this.bytes.length) {
+                int read = in.read(this.bytes, this.len, this.bytes.length - this.len);
                 if (read == -1) {
                     this.in.close();
                     this.eof = true;
                     break;
                 } else {
                     this.len += read;
-                    off += read;
-                    len -= read;
                 }
             }
-            if (remainingBytes.length > 0) {
-                byte[] combinedBytes = new byte[remainingBytes.length + this.len];
-                System.arraycopy(remainingBytes, 0, combinedBytes, 0, remainingBytes.length);
-                if (this.len > 0) {
-                    System.arraycopy(this.bytes, 0, combinedBytes, remainingBytes.length, this.len);
-                    this.len += remainingBytes.length;
-                } else
-                    this.len = remainingBytes.length;
-                this.bytes = combinedBytes;
-            }
-            this.index = 0;
-        } else
+        } else {
             this.index = -1;
+        } 
     }
 
     /**
