@@ -123,8 +123,10 @@ public class RouterConnectorClient extends ConnectorClient {
 
         boolean nomatch = false; // this will be set true if any stream is not routable
         MacroEngine engine = new MacroEngine().filename(filename);
+        int counter = 1;
 
         for (Routable routable : new Routables(source.getStream(), config.getPreviewSize())) {
+            engine.counter(counter++);
             logger.debug(String.format("new routable metadata: %s", routable.metadata().toString()));
             List<String> destinations = new ArrayList<>();
             for (Route route : routes) {

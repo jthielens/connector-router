@@ -27,6 +27,7 @@ public class MacroEngine {
     private Date now;
     private String filename;
     private Metadata metadata;
+    private int counter;
     private String unique;
 
     /**
@@ -35,38 +36,51 @@ public class MacroEngine {
      * filename properties.
      */
     private enum Token {
-        file(Function.identity(), null),
-        base(FilenameUtils::getBaseName, null),
-        ext((fn) -> FilenameUtils.getExtension(fn).replaceFirst("^(?=[^\\.])","."), null), // prefix with "." unless empty or already "."
-        sender(null, (metadata) -> metadata.sender().id()),
-        receiver(null, (metadata) -> metadata.receiver().id()),
-        groupSender(null, (metadata) -> metadata.groupSender().id()),
-        groupReceiver(null, (metadata) -> metadata.groupReceiver().id()),
-        senderQualifier(null, (metadata) -> metadata.sender().qualifier()),
-        receiverQualifier(null, (metadata) -> metadata.receiver().qualifier()),
-        groupSenderQualifier(null, (metadata) -> metadata.groupSender().qualifier()),
-        groupReceiverQualifier(null, (metadata) -> metadata.groupReceiver().qualifier()),
-        function(null, Metadata::function),
-        type(null, Metadata::type),
-        icn(null, Metadata::icn);
+        file(Function.identity(), null, null),
+        base(FilenameUtils::getBaseName, null, null),
+        ext((fn) -> FilenameUtils.getExtension(fn).replaceFirst("^(?=[^\\.])","."), null, null), // prefix with "." unless empty or already "."
+        sender(null, (metadata) -> metadata.sender().id(), null),
+        receiver(null, (metadata) -> metadata.receiver().id(), null),
+        groupSender(null, (metadata) -> metadata.groupSender().id(), null),
+        groupReceiver(null, (metadata) -> metadata.groupReceiver().id(), null),
+        senderQualifier(null, (metadata) -> metadata.sender().qualifier(), null),
+        receiverQualifier(null, (metadata) -> metadata.receiver().qualifier(), null),
+        groupSenderQualifier(null, (metadata) -> metadata.groupSender().qualifier(), null),
+        groupReceiverQualifier(null, (metadata) -> metadata.groupReceiver().qualifier(), null),
+        function(null, Metadata::function, null),
+        type(null, Metadata::type, null),
+        icn(null, Metadata::icn, null),
+        counter(null, null, MacroEngine::counter),
+        unique(null, null, MacroEngine::unique);
 
         private final Function<String, String> filenameFunction;
         private final Function<Metadata, String> metadataFunction;
+        private final Function<MacroEngine, String> engineFunction;
 
         private Token(Function<String,String> filenameFunction,
-                Function<Metadata,String> metadataFunction) {
+                Function<Metadata,String> metadataFunction,
+                Function<MacroEngine,String> engineFunction) {
             this.filenameFunction = filenameFunction;
             this.metadataFunction = metadataFunction;
+            this.engineFunction = engineFunction;
         }
 
     };
+
+    /**
+     * Returns {@code true} if the {@link ScriptEngine} has been started.
+     * @return {@code true} if the {@link ScriptEngine} has been started
+     */
+    public boolean started() {
+        return engine != null;
+    }
 
     /**
      * Starts up the {@link ScriptEngine}, if one has not
      * yet been started.
      */
     private void startEngine() {
-        if (engine == null) {
+        if (!started()) {
             engine  = engine_factory.getEngineByName("JavaScript");
             try {
                 engine.eval("load('nashorn:mozilla_compat.js');"+
@@ -111,12 +125,34 @@ public class MacroEngine {
      */
     public MacroEngine filename(String filename) {
         this.filename = filename;
-        if (engine != null) {
+        if (started()) {
             Stream.of(Token.values())
                     .filter((t) -> t.filenameFunction != null)
                     .forEach((t) -> engine.put(t.name(), filename==null ? "" : t.filenameFunction.apply(filename)));
         }
         return this;
+    }
+
+    /**
+     * Sets the counter token for the engine.  If the {@link ScriptEngine} is started,
+     * the value is updated in its environment as well.
+     * @param counter the counter value to set for the engine
+     * @return {@code this} to allow for fluent-style setting
+     */
+    public MacroEngine counter(int counter) {
+        this.counter = counter;
+        if (started()) {
+            engine.put("counter", String.valueOf(counter));
+        }
+        return this;
+    }
+
+    /**
+     * Returns the current value of the counter as a {@code String}
+     * @return the counter as a String
+     */
+    public String counter() {
+        return String.valueOf(counter);
     }
 
     /**
@@ -127,10 +163,18 @@ public class MacroEngine {
      */
     public MacroEngine unique(String unique) {
         this.unique = unique;
-        if (engine != null) {
+        if (started()) {
             engine.put("unique", Strings.nullToEmpty(unique));
         }
         return this;
+    }
+
+    /**
+     * Returns the current value of the uniqueness token.
+     * @return the uniqueness token
+     */
+    public String unique() {
+        return this.unique;
     }
 
     /**
@@ -197,6 +241,8 @@ public class MacroEngine {
                     return filename == null ? "" : Strings.nullToEmpty(token.filenameFunction.apply(filename));
                 } else if (token.metadataFunction != null) {
                     return metadata == null ? "" : Strings.nullToEmpty(token.metadataFunction.apply(metadata));
+                } else if (token.engineFunction != null) {
+                    return Strings.nullToEmpty(token.engineFunction.apply(this));
                 }
             } catch (IllegalArgumentException e) {
                 // fall through

@@ -33,11 +33,12 @@ public class TestMacroEngine {
         assertEquals("FROM", engine.expr("sender"));
         assertEquals("final=FROM-.ext.", engine.expand("final=${sender}-${ext}."));
         assertEquals("final=FROM-.ext.", engine.expand("final=${sender+'-'+ext}."));
+        assertTrue(engine.started());
     }
 
     @Test
     public void testMetadata() {
-        MacroEngine engine = new MacroEngine(metadata(), "filename.ext");
+        MacroEngine engine = new MacroEngine(metadata(), "filename.ext").counter(17).unique(".UNIQUE");
         assertEquals("FROM", engine.expand("${sender}"));
         assertEquals("TO", engine.expand("${receiver}"));
         assertEquals("GFROM", engine.expand("${groupSender}"));
@@ -49,6 +50,9 @@ public class TestMacroEngine {
         assertEquals("FUNCTION", engine.expand("${function}"));
         assertEquals("MOCK", engine.expand("${type}"));
         assertEquals("123456", engine.expand("${icn}"));
+        assertEquals(".UNIQUE", engine.expand("${unique}"));
+        assertEquals("17", engine.expand("${counter}"));
+        assertFalse(engine.started());
     }
 
     @Test
@@ -65,6 +69,9 @@ public class TestMacroEngine {
         assertEquals("", engine.expand("${function}"));
         assertEquals("", engine.expand("${type}"));
         assertEquals("", engine.expand("${icn}"));
+        assertEquals("", engine.expand("${unique}"));
+        assertEquals("0", engine.expand("${counter}"));
+        assertFalse(engine.started());
     }
 
     @Test
@@ -85,6 +92,9 @@ public class TestMacroEngine {
         assertEquals("", engine.expand("${function}"));
         assertEquals("", engine.expand("${type}"));
         assertEquals("", engine.expand("${icn}"));
+        assertEquals("", engine.expand("${unique}"));
+        assertEquals("0", engine.expand("${counter}"));
+        assertFalse(engine.started());
     }
 
     @Test
