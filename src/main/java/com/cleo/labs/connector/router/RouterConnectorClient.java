@@ -131,7 +131,7 @@ public class RouterConnectorClient extends ConnectorClient {
             List<String> destinations = new ArrayList<>();
             for (Route route : routes) {
                 logger.debug(String.format("matching %s for route %s", filename, route.toString()));
-                if (routable.matches(route)) {
+                if (route.enabled() && routable.matches(route)) {
                     engine.metadata(routable.metadata()); // metadata not necessarily available until matches()
                     logger.debug(String.format("matched metadata: %s", routable.metadata().toString()));
                     if (!Strings.isNullOrEmpty(route.destination())) {

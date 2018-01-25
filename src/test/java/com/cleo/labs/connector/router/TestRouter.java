@@ -21,10 +21,11 @@ import com.google.gwt.thirdparty.guava.common.io.CharStreams;
 public class TestRouter {
     @Test
     public final void test1() {
-        String json = "[{'sender'='FROM','receiver'='TO','type'='210'}]";
+        String json = "[{'enabled'=true,'sender'='FROM','receiver'='TO','type'='210'}]";
         Gson gson = new Gson();
         Route[] routes = gson.fromJson(json, Route[].class);
         assertEquals(1, routes.length);
+        assertEquals(true, routes[0].enabled());
         assertEquals("FROM", routes[0].sender());
     }
     static private final String[] twoonefour = new String[]{

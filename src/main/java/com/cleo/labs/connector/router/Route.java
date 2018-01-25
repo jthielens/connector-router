@@ -3,6 +3,7 @@ package com.cleo.labs.connector.router;
 import com.google.common.base.Strings;
 
 public class Route {
+    private boolean enabled;
     private String filename;
     private String content;
     private String sender;
@@ -18,6 +19,7 @@ public class Route {
     private String destination;
 
     public Route() {
+        this.enabled = false;
         this.filename = null;
         this.content = null;
         this.sender = null;
@@ -33,6 +35,13 @@ public class Route {
         this.destination = null;
     }
 
+    public boolean enabled() {
+        return enabled;
+    }
+    public Route enabled(boolean enabled) {
+        this.enabled = enabled;
+        return this;
+    }
     public String filename() {
         return filename;
     }
