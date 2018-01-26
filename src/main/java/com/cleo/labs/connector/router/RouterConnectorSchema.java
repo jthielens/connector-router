@@ -26,6 +26,11 @@ public class RouterConnectorSchema extends ConnectorConfig {
             .build();
 
     @Property
+    final IConnectorProperty<Boolean> routeToFirstMatchingRouteOnly = new PropertyBuilder<>("RouteToFirstMatchingRouteOnly", false)
+            .setDescription("Route only to the first matching route instead of all matching routes")
+            .build();
+
+    @Property
     final IConnectorProperty<String> previewSize = new PropertyBuilder<>("PreviewSize", "8k")
             .setDescription("The number bytes to read ahead for content pattern matching.")
             .addPossibleRegexes("\\d+(?i:[kmg]b?)?")

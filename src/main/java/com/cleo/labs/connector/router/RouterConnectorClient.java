@@ -123,28 +123,43 @@ public class RouterConnectorClient extends ConnectorClient {
 
         boolean nomatch = false; // this will be set true if any stream is not routable
         MacroEngine engine = new MacroEngine().filename(filename);
-        int counter = 1;
+        int counter = 0;
 
         for (Routable routable : new Routables(source.getStream(), config.getPreviewSize())) {
-            engine.counter(counter++);
             logger.debug(String.format("new routable metadata: %s", routable.metadata().toString()));
             List<String> destinations = new ArrayList<>();
+            // first collect unevaluated destinations
             for (Route route : routes) {
                 logger.debug(String.format("matching %s for route %s", filename, route.toString()));
                 if (route.enabled() && routable.matches(route)) {
                     engine.metadata(routable.metadata()); // metadata not necessarily available until matches()
                     logger.debug(String.format("matched metadata: %s", routable.metadata().toString()));
                     if (!Strings.isNullOrEmpty(route.destination())) {
-                        String output = uniquely(engine, route.destination(), unique);
-                        logger.debug(String.format("routing file to: %s", output));
-                        if (!Strings.isNullOrEmpty(output)) {
-                            destinations.add(output);
-                        }
+                        destinations.add(route.destination());
                     }
                 }
             }
+            // now evaluate them, inserting the counters
+            for (int d = 0; d < destinations.size(); d++) {
+                if (destinations.size() == 1) {
+                    engine.counter(String.valueOf(counter+1));
+                } else {
+                    engine.counter(String.valueOf(counter+1)+"."+String.valueOf(d+1));
+                }
+                String output = Strings.emptyToNull(uniquely(engine, destinations.get(d), unique));
+                destinations.set(d, output);
+                if (output != null) {
+                    logger.debug(String.format("routing file to: %s", output));
+                    if (config.getRouteToFirstMatchingRouteOnly()) {
+                        break;
+                    }
+                }
+            }
+            counter++;
+            // now convert to OutputStreams
             OutputStream[] outputs = destinations
                     .stream()
+                    .filter(Objects::nonNull)
                     .map(LexFile::new)
                     .map((f) -> {
                         try {

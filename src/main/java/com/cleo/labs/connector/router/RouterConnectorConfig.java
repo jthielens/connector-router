@@ -70,6 +70,15 @@ public class RouterConnectorConfig {
     }
 
     /**
+     * Gets the Route To First Matching Route Only property.
+     * @return the Route To First Matching Route Only property
+     * @throws ConnectorPropertyException
+     */
+    public boolean getRouteToFirstMatchingRouteOnly() throws ConnectorPropertyException {
+        return schema.routeToFirstMatchingRouteOnly.getValue(client);
+    }
+
+    /**
      * Parses an optionally suffixed length:
      * <ul>
      * <li><b>nnnK</b> nnn KB (technically "kibibytes", * 1024)</li>

@@ -38,7 +38,7 @@ public class TestMacroEngine {
 
     @Test
     public void testMetadata() {
-        MacroEngine engine = new MacroEngine(metadata(), "filename.ext").counter(17).unique(".UNIQUE");
+        MacroEngine engine = new MacroEngine(metadata(), "filename.ext").counter("17").unique(".UNIQUE");
         assertEquals("FROM", engine.expand("${sender}"));
         assertEquals("TO", engine.expand("${receiver}"));
         assertEquals("GFROM", engine.expand("${groupSender}"));
@@ -70,7 +70,7 @@ public class TestMacroEngine {
         assertEquals("", engine.expand("${type}"));
         assertEquals("", engine.expand("${icn}"));
         assertEquals("", engine.expand("${unique}"));
-        assertEquals("0", engine.expand("${counter}"));
+        assertEquals("", engine.expand("${counter}"));
         assertFalse(engine.started());
     }
 
@@ -93,7 +93,7 @@ public class TestMacroEngine {
         assertEquals("", engine.expand("${type}"));
         assertEquals("", engine.expand("${icn}"));
         assertEquals("", engine.expand("${unique}"));
-        assertEquals("0", engine.expand("${counter}"));
+        assertEquals("", engine.expand("${counter}"));
         assertFalse(engine.started());
     }
 

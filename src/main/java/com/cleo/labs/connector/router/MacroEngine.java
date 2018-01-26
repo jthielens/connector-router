@@ -27,7 +27,7 @@ public class MacroEngine {
     private Date now;
     private String filename;
     private Metadata metadata;
-    private int counter;
+    private String counter;
     private String unique;
 
     /**
@@ -139,10 +139,10 @@ public class MacroEngine {
      * @param counter the counter value to set for the engine
      * @return {@code this} to allow for fluent-style setting
      */
-    public MacroEngine counter(int counter) {
+    public MacroEngine counter(String counter) {
         this.counter = counter;
         if (started()) {
-            engine.put("counter", String.valueOf(counter));
+            engine.put("counter", counter);
         }
         return this;
     }
@@ -152,7 +152,7 @@ public class MacroEngine {
      * @return the counter as a String
      */
     public String counter() {
-        return String.valueOf(counter);
+        return counter;
     }
 
     /**
