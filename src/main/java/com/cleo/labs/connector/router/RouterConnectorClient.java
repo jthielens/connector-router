@@ -126,7 +126,9 @@ public class RouterConnectorClient extends ConnectorClient {
         int counter = 0;
 
         for (Routable routable : new Routables(source.getStream(), config.getPreviewSize())) {
-            logger.debug(String.format("new routable metadata: %s", routable.metadata().toString()));
+            if (routable.metadata() != null) {
+                logger.debug(String.format("new routable metadata: %s", routable.metadata().toString()));
+            }
             List<String> destinations = new ArrayList<>();
             // first collect unevaluated destinations
             for (Route route : routes) {
