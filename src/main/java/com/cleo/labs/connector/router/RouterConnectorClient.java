@@ -143,7 +143,7 @@ public class RouterConnectorClient extends ConnectorClient {
             }
             // now evaluate them, inserting the counters
             for (int d = 0; d < destinations.size(); d++) {
-                if (destinations.size() == 1) {
+                if (destinations.size() == 1 || config.getRouteToFirstMatchingRouteOnly()) {
                     engine.counter(String.valueOf(counter+1));
                 } else {
                     engine.counter(String.valueOf(counter+1)+"."+String.valueOf(d+1));
@@ -153,6 +153,10 @@ public class RouterConnectorClient extends ConnectorClient {
                 if (output != null) {
                     logger.debug(String.format("routing file to: %s", output));
                     if (config.getRouteToFirstMatchingRouteOnly()) {
+                        // after first match null out the rest of them, if any
+                        for (int extra = d+1; extra < destinations.size(); extra++) {
+                            destinations.set(extra, null);
+                        }
                         break;
                     }
                 }
