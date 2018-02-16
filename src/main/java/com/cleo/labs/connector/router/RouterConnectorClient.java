@@ -5,6 +5,7 @@ import static com.cleo.connector.api.command.ConnectorCommandName.PUT;
 import static com.cleo.connector.api.command.ConnectorCommandOption.Delete;
 import static com.cleo.connector.api.command.ConnectorCommandOption.Unique;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.attribute.BasicFileAttributeView;
@@ -23,20 +24,32 @@ import com.cleo.connector.api.command.ConnectorCommandUtil;
 import com.cleo.connector.api.command.PutCommand;
 import com.cleo.connector.api.interfaces.IConnectorOutgoing;
 import com.cleo.labs.connector.router.Routables.Routable;
-import com.cleo.lexicom.beans.LexFile;
-import com.cleo.lexicom.streams.LexFileOutputStream;
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 
 public class RouterConnectorClient extends ConnectorClient {
     private RouterConnectorConfig config;
+    private RouterFileFactory fileFactory;
 
     /**
-     * Constructs a new {@code RouterConnectorClient} for the schema
+     * Constructs a new {@code RouterConnectorClient} for the schema using
+     * the default config wrapper and LexFileFactory.
      * @param schema the {@code RouterConnectorSchema}
      */
     public RouterConnectorClient(RouterConnectorSchema schema) {
         this.config = new RouterConnectorConfig(this, schema);
+        this.fileFactory = new LexFileFactory();
+    }
+
+    /**
+     * Constructs a new {@code RouterConnectorClient} for the schema using
+     * explicit config and fileFactory for testing.
+     * @param schema the {@code RouterConnectorSchema}
+     * @param fileFactor the {@code RouterFileFactory} to use
+     */
+    public RouterConnectorClient(RouterConnectorConfig config, RouterFileFactory fileFactory) {
+        this.config = config;
+        this.fileFactory = fileFactory;
     }
 
     /**
@@ -55,7 +68,7 @@ public class RouterConnectorClient extends ConnectorClient {
     private String uniquely (MacroEngine engine, String destination, boolean unique) {
         String output = engine.expand(destination);
         if (unique && !Strings.isNullOrEmpty(output)) {
-            LexFile file = new LexFile(output);
+            File file = fileFactory.getFile(output);
             int counter = 0;
             String candidate = output;
             boolean justSliceIt = false; // when true, forget the engine and use string slicing
@@ -76,7 +89,7 @@ public class RouterConnectorClient extends ConnectorClient {
                 if (justSliceIt) {
                     candidate = base+"."+counter+ext;
                 }
-                file = new LexFile(candidate);
+                file = fileFactory.getFile(candidate);
             }
             output = candidate;
             engine.unique(null); // reset it for the next file
@@ -118,6 +131,7 @@ public class RouterConnectorClient extends ConnectorClient {
                 ConnectorCommandUtil.isOptionOn(put.getOptions(), Unique);
 
         Route[] routes = Stream.of(config.getRoutes())
+                .filter(Route::enabled)
                 .filter((r) -> Strings.isNullOrEmpty(r.filename()) || filename.matches(r.filename()))
                 .toArray(Route[]::new);
 
@@ -133,25 +147,29 @@ public class RouterConnectorClient extends ConnectorClient {
             // first collect unevaluated destinations
             for (Route route : routes) {
                 logger.debug(String.format("matching %s for route %s", filename, route.toString()));
-                if (route.enabled() && routable.matches(route)) {
+                if (routable.matches(route) || route.matchesAnything()) {
                     engine.metadata(routable.metadata()); // metadata not necessarily available until matches()
-                    logger.debug(String.format("matched metadata: %s", routable.metadata().toString()));
+                    if (routable.metadata() != null) {
+                        logger.debug(String.format("matched metadata: %s", routable.metadata().toString()));
+                    }
                     if (!Strings.isNullOrEmpty(route.destination())) {
                         destinations.add(route.destination());
                     }
                 }
             }
             // now evaluate them, inserting the counters
+            int subcounter = 0;
             for (int d = 0; d < destinations.size(); d++) {
                 if (destinations.size() == 1 || config.getRouteToFirstMatchingRouteOnly()) {
                     engine.counter(String.valueOf(counter+1));
                 } else {
-                    engine.counter(String.valueOf(counter+1)+"."+String.valueOf(d+1));
+                    engine.counter(String.valueOf(counter+1)+"."+String.valueOf(subcounter+1));
                 }
                 String output = Strings.emptyToNull(uniquely(engine, destinations.get(d), unique));
                 destinations.set(d, output);
                 if (output != null) {
                     logger.debug(String.format("routing file to: %s", output));
+                    subcounter++;
                     if (config.getRouteToFirstMatchingRouteOnly()) {
                         // after first match null out the rest of them, if any
                         for (int extra = d+1; extra < destinations.size(); extra++) {
@@ -166,10 +184,9 @@ public class RouterConnectorClient extends ConnectorClient {
             OutputStream[] outputs = destinations
                     .stream()
                     .filter(Objects::nonNull)
-                    .map(LexFile::new)
                     .map((f) -> {
                         try {
-                            return new LexFileOutputStream(f);
+                            return fileFactory.getOutputStream(f);
                         } catch (Exception e) {
                             logger.logWarning(String.format("Destination '%s' skipped due to error: %s", f, e.getMessage()));
                             return null;
@@ -183,9 +200,7 @@ public class RouterConnectorClient extends ConnectorClient {
                     try {
                         output = uniquely(engine, errorDestination, unique);
                         logger.debug(String.format("routing file to error destination: %s", output));
-                        outputs = new OutputStream[] {
-                                new LexFileOutputStream(new LexFile(output))
-                        };
+                        outputs = new OutputStream[] {fileFactory.getOutputStream(output)};
                     } catch (Exception e) {
                         logger.logWarning(String.format("Error Destination '%s' ignored due to error: %s", output, e.getMessage()));
                         // well, we tried

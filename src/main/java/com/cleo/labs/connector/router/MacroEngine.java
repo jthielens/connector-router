@@ -185,7 +185,7 @@ public class MacroEngine {
      */
     public MacroEngine metadata(Metadata metadata) {
         this.metadata = metadata;
-        if (engine != null && metadata != null) {
+        if (engine != null) {
             Stream.of(Token.values())
                     .filter((t) -> t.metadataFunction != null)
                     .forEach((t) -> engine.put(t.name(), metadata==null ? "" : t.metadataFunction.apply(metadata)));

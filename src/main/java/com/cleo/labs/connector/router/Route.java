@@ -134,6 +134,28 @@ public class Route {
         return this;
     }
 
+    /**
+     * Returns {@code true} if this route matches anything, meaning
+     * that it has no content or metadata-related matching patterns.
+     * <p/>
+     * Note that the {@code enabled} flag and any {@code filename}
+     * matching patterns are not considered in this evaluation.
+     * @return {@code true} is this route matches anything
+     */
+    public boolean matchesAnything() {
+        return Strings.isNullOrEmpty(content) &&
+                Strings.isNullOrEmpty(sender) &&
+                Strings.isNullOrEmpty(receiver) &&
+                Strings.isNullOrEmpty(groupSender) &&
+                Strings.isNullOrEmpty(groupReceiver) &&
+                Strings.isNullOrEmpty(senderQualifier) &&
+                Strings.isNullOrEmpty(receiverQualifier) &&
+                Strings.isNullOrEmpty(groupSenderQualifier) &&
+                Strings.isNullOrEmpty(groupReceiverQualifier) &&
+                Strings.isNullOrEmpty(function) &&
+                Strings.isNullOrEmpty(type);
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
